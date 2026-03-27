@@ -5,6 +5,8 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/recover"
+	"github.com/gofiber/fiber/v3/middleware/requestid"
 	"github.com/schodevio/trellgo/internal/config"
 )
 
@@ -19,6 +21,11 @@ func NewServer(cfg *config.Config) *Server {
 		AppName:   "TrellGo",
 		BodyLimit: 1 * 1024 * 1024, // 1MB
 	})
+
+	app.Use(recover.New())
+	app.Use(requestid.New())
+	app.Use(loggerMiddleware())
+	app.Use(corsMiddleware())
 
 	container := NewContainer(cfg)
 
