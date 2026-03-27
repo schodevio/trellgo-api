@@ -1,9 +1,21 @@
 package app
 
-import "github.com/schodevio/trellgo/internal/config"
+import (
+	"context"
 
-type Container struct{}
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/schodevio/trellgo/internal/platform/config"
+	"github.com/schodevio/trellgo/internal/platform/db"
+)
 
-func NewContainer(cfg *config.Config) *Container {
-	return &Container{}
+type Container struct {
+	DB *pgxpool.Pool
+}
+
+func NewContainer(ctx context.Context, cfg *config.Config) *Container {
+	pool := db.NewPool(ctx, cfg.DBUrl)
+
+	return &Container{
+		DB: pool,
+	}
 }

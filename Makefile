@@ -1,4 +1,7 @@
-.PHONY: dev build run clean
+.PHONY: dev build run clean migrate-up migrate-down migrate-status migrate-create sqlc
+
+MIGRATIONS_DIR=db/migrations
+DB_URL=$(shell grep DB_URL .env | cut -d '=' -f2-)
 
 dev:
 	air
@@ -11,3 +14,19 @@ run:
 
 clean:
 	rm -rf ./tmp
+
+migrate-up:
+	goose -dir $(MIGRATIONS_DIR) postgres "$(DB_URL)" up
+
+migrate-down:
+	goose -dir $(MIGRATIONS_DIR) postgres "$(DB_URL)" down
+
+migrate-status:
+	goose -dir $(MIGRATIONS_DIR) postgres "$(DB_URL)" status
+
+migrate-create:
+	@read -p "Migration name: " name; \
+	goose -dir $(MIGRATIONS_DIR) create $$name sql
+
+sqlc:
+	sqlc generate

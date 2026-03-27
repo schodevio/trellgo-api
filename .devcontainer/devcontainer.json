@@ -22,7 +22,7 @@
         "go.toolsManagement.autoUpdate": true
       }
     }
-  }
+  },
 
-  // "postCreateCommand": "go mod download"
+  "postCreateCommand": "go mod download"
 }

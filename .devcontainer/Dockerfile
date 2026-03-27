@@ -4,12 +4,6 @@ FROM mcr.microsoft.com/devcontainers/go:$GO_VERSION
 
 USER root
 
-# --- Install goose + sqlc
-# RUN go install github.com/pressly/goose/v3/cmd/goose@latest
-# RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-
-# ENV PATH="/go/bin:${PATH}"
-
 # --- Custom setup
 USER vscode
 
@@ -18,4 +12,9 @@ RUN git clone https://github.com/zsh-users/zsh-autosuggestions \
 
 RUN sed -ir 's/plugins=(git)/plugins=(git zsh-autosuggestions)/g' ~/.zshrc && \
     sudo chsh -s $(which zsh) $(whoami)
-# ---
+
+# --- Install goose + sqlc (as vscode user)
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
+ENV PATH="/go/bin:${PATH}"
