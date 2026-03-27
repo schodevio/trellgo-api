@@ -18,8 +18,9 @@ type Server struct {
 
 func NewServer(cfg *config.Config) *Server {
 	app := fiber.New(fiber.Config{
-		AppName:   "TrellGo",
-		BodyLimit: 1 * 1024 * 1024, // 1MB
+		AppName:      "TrellGo",
+		BodyLimit:    1 * 1024 * 1024, // 1MB
+		ErrorHandler: ErrorHandler,
 	})
 
 	app.Use(recover.New())
@@ -28,16 +29,13 @@ func NewServer(cfg *config.Config) *Server {
 	app.Use(corsMiddleware())
 
 	container := NewContainer(cfg)
+	setupRoutes(app, container)
 
-	server := &Server{
+	return &Server{
 		app:       app,
 		container: container,
 		cfg:       cfg,
 	}
-
-	setupRoutes(app, container)
-
-	return server
 }
 
 func (s *Server) Start() {
