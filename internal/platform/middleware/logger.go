@@ -1,4 +1,4 @@
-package app
+package middleware
 
 import (
 	"time"
@@ -7,7 +7,7 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/logger"
 )
 
-func loggerMiddleware() fiber.Handler {
+func Logger() fiber.Handler {
 	return logger.New(logger.Config{
 		Format:     logger.DefaultFormat,
 		TimeFormat: time.RFC3339Nano,

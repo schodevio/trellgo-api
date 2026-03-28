@@ -8,7 +8,9 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/gofiber/fiber/v3/middleware/requestid"
+
 	"github.com/schodevio/trellgo/internal/platform/config"
+	"github.com/schodevio/trellgo/internal/platform/middleware"
 )
 
 type Server struct {
@@ -28,8 +30,8 @@ func NewServer(cfg *config.Config) *Server {
 
 	app.Use(recover.New())
 	app.Use(requestid.New())
-	app.Use(loggerMiddleware())
-	app.Use(corsMiddleware())
+	app.Use(middleware.Logger())
+	app.Use(middleware.CORS())
 
 	container := NewContainer(ctx, cfg)
 	setupRoutes(app, container)

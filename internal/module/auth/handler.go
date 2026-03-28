@@ -30,7 +30,7 @@ func (h *handler) SignIn(ctx fiber.Ctx) error {
 		return err
 	}
 
-	return ctx.JSON(resp)
+	return ctx.Status(fiber.StatusOK).JSON(resp)
 }
 
 func (h *handler) SignUp(ctx fiber.Ctx) error {
