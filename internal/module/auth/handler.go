@@ -3,6 +3,7 @@ package auth
 import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/schodevio/trellgo/internal/platform/apierrors"
+	"github.com/schodevio/trellgo/internal/platform/validator"
 )
 
 type handler struct {
@@ -14,10 +15,14 @@ func newHandler(service Service) *handler {
 }
 
 func (h *handler) SignUp(ctx fiber.Ctx) error {
-	var req CreateUserRequest
+	var req SignUpRequest
 
 	if err := ctx.Bind().Body(&req); err != nil {
 		return apierrors.BadRequest("invalid request body")
+	}
+
+	if err := validator.Validate(&req); err != nil {
+		return err
 	}
 
 	resp, err := h.service.CreateUser(&req)

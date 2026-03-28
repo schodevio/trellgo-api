@@ -7,7 +7,8 @@ import (
 )
 
 type Repository interface {
-	CreateUser(ctx context.Context, user *CreateUserRequest) (sqlc.User, error)
+	CreateUser(ctx context.Context, data *SignUpRequest) (sqlc.User, error)
+	GetUserByEmail(ctx context.Context, email string) (sqlc.User, error)
 }
 
 type repository struct {
@@ -18,7 +19,7 @@ func newRepository(queries *sqlc.Queries) Repository {
 	return &repository{queries: queries}
 }
 
-func (r *repository) CreateUser(ctx context.Context, data *CreateUserRequest) (sqlc.User, error) {
+func (r *repository) CreateUser(ctx context.Context, data *SignUpRequest) (sqlc.User, error) {
 	passwordHash, err := hashPassword(data.Password)
 	if err != nil {
 		return sqlc.User{}, err
@@ -28,4 +29,8 @@ func (r *repository) CreateUser(ctx context.Context, data *CreateUserRequest) (s
 		Email:        data.Email,
 		PasswordHash: passwordHash,
 	})
+}
+
+func (r *repository) GetUserByEmail(ctx context.Context, email string) (sqlc.User, error) {
+	return r.queries.GetUserByEmail(ctx, email)
 }

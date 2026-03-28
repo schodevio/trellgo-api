@@ -9,7 +9,11 @@ type UserResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type CreateUserRequest struct {
+type SignUpRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=8"`
+}
+
+type SignUpResponse struct {
+	Email string `json:"email"`
 }
