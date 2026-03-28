@@ -3,6 +3,8 @@ module github.com/schodevio/trellgo
 go 1.25.8
 
 require (
+	aidanwoods.dev/go-paseto v1.6.0 // indirect
+	aidanwoods.dev/go-result v0.3.1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

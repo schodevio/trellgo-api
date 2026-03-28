@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	DBUrl string
-	Port  string
+	DBUrl     string
+	Port      string
+	SecretKey string
 }
 
 func Load() *Config {
@@ -19,12 +20,17 @@ func Load() *Config {
 	}
 
 	cfg := &Config{
-		DBUrl: os.Getenv("DB_URL"),
-		Port:  os.Getenv("PORT"),
+		DBUrl:     os.Getenv("DB_URL"),
+		Port:      os.Getenv("PORT"),
+		SecretKey: os.Getenv("SECRET_KEY"),
 	}
 
 	if cfg.DBUrl == "" {
 		log.Fatal("DB_URL is required")
+	}
+
+	if cfg.SecretKey == "" {
+		log.Fatal("SECRET_KEY is required")
 	}
 
 	return cfg

@@ -14,6 +14,25 @@ func newHandler(service Service) *handler {
 	return &handler{service: service}
 }
 
+func (h *handler) SignIn(ctx fiber.Ctx) error {
+	var req SignInRequest
+
+	if err := ctx.Bind().Body(&req); err != nil {
+		return apierrors.BadRequest("invalid request body")
+	}
+
+	if err := validator.Validate(&req); err != nil {
+		return err
+	}
+
+	resp, err := h.service.SignInUser(&req)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(resp)
+}
+
 func (h *handler) SignUp(ctx fiber.Ctx) error {
 	var req SignUpRequest
 
@@ -25,7 +44,7 @@ func (h *handler) SignUp(ctx fiber.Ctx) error {
 		return err
 	}
 
-	resp, err := h.service.CreateUser(&req)
+	resp, err := h.service.SignUpUser(&req)
 	if err != nil {
 		return err
 	}

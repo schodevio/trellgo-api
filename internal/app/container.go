@@ -19,7 +19,7 @@ func NewContainer(ctx context.Context, cfg *config.Config) *Container {
 	pool := db.NewPool(ctx, cfg.DBUrl)
 	queries := sqlc.New(pool)
 
-	authModule := auth.New(queries)
+	authModule := auth.New(queries, cfg.SecretKey)
 
 	return &Container{
 		DB:   pool,
