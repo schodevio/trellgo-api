@@ -39,7 +39,7 @@ func (s *service) SignInUser(data *SignInRequest) (SignInResponse, error) {
 		IpAddress: data.IpAddress,
 	})
 	if err != nil {
-		return SignInResponse{}, apierrors.Internal("failed to generate tokens")
+		return SignInResponse{}, err
 	}
 
 	return SignInResponse{
@@ -69,7 +69,7 @@ func (s *service) RefreshToken(data *RefreshRequest) (SignInResponse, error) {
 		IpAddress: data.IpAddress,
 	})
 	if err != nil {
-		return SignInResponse{}, apierrors.Internal("failed to generate tokens")
+		return SignInResponse{}, err
 	}
 
 	return SignInResponse{
@@ -125,7 +125,7 @@ func (s *service) generateTokens(data *generateTokensData) (string, string, erro
 		refreshExpiration,
 	)
 	if err != nil {
-		return "", "", apierrors.Internal("failed to save refresh token")
+		return "", "", apierrors.Internal("failed to generate tokens")
 	}
 
 	return accessToken, refreshToken, nil

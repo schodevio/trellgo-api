@@ -1,4 +1,4 @@
-.PHONY: dev build run clean migrate-up migrate-down migrate-status migrate-create sqlc
+.PHONY: dev build run clean test migrate-up migrate-down migrate-status migrate-create sqlc
 
 MIGRATIONS_DIR=db/migrations
 DB_URL=$(shell grep DB_URL .env | cut -d '=' -f2-)
@@ -14,6 +14,9 @@ run:
 
 clean:
 	rm -rf ./tmp
+
+test:
+	go test -v ./internal/...
 
 migrate-up:
 	goose -dir $(MIGRATIONS_DIR) postgres "$(DB_URL)" up
