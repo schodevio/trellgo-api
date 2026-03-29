@@ -27,6 +27,7 @@ func New(queries *sqlc.Queries, authKey paseto.V4SymmetricKey) *Module {
 func (m *Module) RegisterRoutes(router fiber.Router) {
 	group := router.Group("/auth")
 
+	group.Post("/refresh", m.handler.Refresh)
 	group.Post("/signin", m.handler.SignIn)
 	group.Post("/signup", m.handler.SignUp)
 }

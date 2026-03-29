@@ -1,6 +1,9 @@
 package auth
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"time"
 
 	paseto "aidanwoods.dev/go-paseto"
@@ -12,8 +15,8 @@ const (
 	refreshTokenTTL = 7 * 24 * time.Hour
 )
 
-func hashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+func hashPassword(value string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(value), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
 	}
@@ -25,22 +28,24 @@ func checkPassword(password, hash string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
 }
 
-func generateTokens(userID string, key paseto.V4SymmetricKey) (string, string) {
-	now := time.Now()
+func hashToken(token string) string {
+	h := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(h[:])
+}
 
-	access := paseto.NewToken()
-	access.SetSubject(userID)
-	access.SetIssuedAt(now)
-	access.SetNotBefore(now)
-	access.SetExpiration(now.Add(accessTokenTTL))
-	access.SetString("typ", "access")
+func parseRefreshToken(refreshToken string, key paseto.V4SymmetricKey) (string, error) {
+	parser := paseto.NewParser()
+	parser.AddRule(paseto.NotExpired())
 
-	refresh := paseto.NewToken()
-	refresh.SetSubject(userID)
-	refresh.SetIssuedAt(now)
-	refresh.SetNotBefore(now)
-	refresh.SetExpiration(now.Add(refreshTokenTTL))
-	refresh.SetString("typ", "refresh")
+	token, err := parser.ParseV4Local(key, refreshToken, nil)
+	if err != nil {
+		return "", err
+	}
 
-	return access.V4Encrypt(key, nil), refresh.V4Encrypt(key, nil)
+	typ, err := token.GetString("typ")
+	if err != nil || typ != "refresh" {
+		return "", fmt.Errorf("invalid token type")
+	}
+
+	return token.GetSubject()
 }
