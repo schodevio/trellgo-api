@@ -56,7 +56,7 @@ func (s *service) RefreshToken(data *RefreshRequest) (SignInResponse, error) {
 
 	stored, err := s.repo.GetRefreshTokenByRawToken(context.Background(), data.Token)
 	if err != nil {
-		return SignInResponse{}, apierrors.Unauthorized("refresh token not found or expired")
+		return SignInResponse{}, apierrors.Unauthorized("invalid or expired refresh token")
 	}
 
 	if err := s.repo.RevokeRefreshToken(context.Background(), stored.ID); err != nil {
@@ -86,7 +86,7 @@ func (s *service) SignUpUser(data *SignUpRequest) (SignUpResponse, error) {
 
 	user, err := s.repo.CreateUser(context.Background(), data)
 	if err != nil {
-		return SignUpResponse{}, err
+		return SignUpResponse{}, apierrors.Internal("failed to create user")
 	}
 
 	return SignUpResponse{Email: user.Email}, nil

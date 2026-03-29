@@ -49,6 +49,24 @@ func newTestService(repo Repository) Service {
 	return newService(repo, paseto.NewV4SymmetricKey())
 }
 
+func newTestServiceWithKey(repo Repository) (Service, paseto.V4SymmetricKey) {
+	key := paseto.NewV4SymmetricKey()
+	return newService(repo, key), key
+}
+
+func validRefreshToken(key paseto.V4SymmetricKey, userID string) string {
+	now := time.Now()
+
+	t := paseto.NewToken()
+	t.SetSubject(userID)
+	t.SetIssuedAt(now)
+	t.SetNotBefore(now)
+	t.SetExpiration(now.Add(refreshTokenTTL))
+	t.SetString("typ", "refresh")
+
+	return t.V4Encrypt(key, nil)
+}
+
 func hashedTestPassword() string {
 	h, _ := hashPassword("password123")
 	return h
@@ -155,5 +173,179 @@ func TestSignInUser_SaveTokenFails(t *testing.T) {
 	assert.Error(t, err)
 	assert.Empty(t, resp.AccessToken)
 	assert.ErrorContains(t, err, "failed to generate tokens")
+	repo.AssertExpectations(t)
+}
+
+// --- RefreshToken ---
+
+func TestRefreshToken_Success(t *testing.T) {
+	repo := new(mockRepository)
+	svc, key := newTestServiceWithKey(repo)
+
+	token := validRefreshToken(key, "user-1")
+	stored := sqlc.RefreshToken{ID: "rt-1", UserID: "user-1"}
+
+	repo.
+		On("GetRefreshTokenByRawToken", mock.Anything, token).
+		Return(stored, nil)
+
+	repo.
+		On("RevokeRefreshToken", mock.Anything, stored.ID).
+		Return(nil)
+
+	repo.
+		On("CreateRefreshToken", mock.Anything, stored.UserID, mock.AnythingOfType("string"), "", "", mock.AnythingOfType("time.Time")).
+		Return(sqlc.RefreshToken{}, nil)
+
+	resp, err := svc.RefreshToken(&RefreshRequest{Token: token})
+
+	assert.NoError(t, err)
+	assert.NotEmpty(t, resp.AccessToken)
+	assert.NotEmpty(t, resp.RefreshToken)
+	assert.NotEqual(t, token, resp.RefreshToken)
+	repo.AssertExpectations(t)
+}
+
+func TestRefreshToken_InvalidToken(t *testing.T) {
+	repo := new(mockRepository)
+	svc := newTestService(repo)
+
+	resp, err := svc.RefreshToken(&RefreshRequest{Token: "not-a-valid-token"})
+
+	assert.Error(t, err)
+	assert.Empty(t, resp.AccessToken)
+	assert.ErrorContains(t, err, "invalid refresh token")
+	repo.AssertExpectations(t)
+}
+
+func TestRefreshToken_TokenNotFound(t *testing.T) {
+	repo := new(mockRepository)
+	svc, key := newTestServiceWithKey(repo)
+
+	token := validRefreshToken(key, "user-1")
+
+	repo.
+		On("GetRefreshTokenByRawToken", mock.Anything, token).
+		Return(sqlc.RefreshToken{}, errors.New("not found"))
+
+	resp, err := svc.RefreshToken(&RefreshRequest{Token: token})
+
+	assert.Error(t, err)
+	assert.Empty(t, resp.AccessToken)
+	assert.ErrorContains(t, err, "invalid or expired refresh token")
+	repo.AssertExpectations(t)
+}
+
+func TestRefreshToken_RevokeFails(t *testing.T) {
+	repo := new(mockRepository)
+	svc, key := newTestServiceWithKey(repo)
+
+	token := validRefreshToken(key, "user-1")
+	stored := sqlc.RefreshToken{ID: "rt-1", UserID: "user-1"}
+
+	repo.
+		On("GetRefreshTokenByRawToken", mock.Anything, token).
+		Return(stored, nil)
+
+	repo.
+		On("RevokeRefreshToken", mock.Anything, stored.ID).
+		Return(errors.New("db error"))
+
+	resp, err := svc.RefreshToken(&RefreshRequest{Token: token})
+
+	assert.Error(t, err)
+	assert.Empty(t, resp.AccessToken)
+	assert.ErrorContains(t, err, "failed to revoke refresh token")
+	repo.AssertExpectations(t)
+}
+
+func TestRefreshToken_SaveNewTokenFails(t *testing.T) {
+	repo := new(mockRepository)
+	svc, key := newTestServiceWithKey(repo)
+
+	token := validRefreshToken(key, "user-1")
+	stored := sqlc.RefreshToken{ID: "rt-1", UserID: "user-1"}
+
+	repo.
+		On("GetRefreshTokenByRawToken", mock.Anything, token).
+		Return(stored, nil)
+
+	repo.
+		On("RevokeRefreshToken", mock.Anything, stored.ID).
+		Return(nil)
+
+	repo.
+		On("CreateRefreshToken", mock.Anything, stored.UserID, mock.AnythingOfType("string"), "", "", mock.AnythingOfType("time.Time")).
+		Return(sqlc.RefreshToken{}, errors.New("db error"))
+
+	resp, err := svc.RefreshToken(&RefreshRequest{Token: token})
+
+	assert.Error(t, err)
+	assert.Empty(t, resp.AccessToken)
+	assert.ErrorContains(t, err, "failed to generate tokens")
+	repo.AssertExpectations(t)
+}
+
+// --- SignUpUser ---
+
+func TestSignUpUser_Success(t *testing.T) {
+	repo := new(mockRepository)
+	svc := newTestService(repo)
+
+	req := &SignUpRequest{Email: "new@example.com", Password: "password123"}
+	user := sqlc.User{ID: "user-1", Email: "new@example.com"}
+
+	repo.
+		On("GetUserByEmail", mock.Anything, req.Email).
+		Return(sqlc.User{}, errors.New("not found"))
+
+	repo.
+		On("CreateUser", mock.Anything, req).
+		Return(user, nil)
+
+	resp, err := svc.SignUpUser(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, user.Email, resp.Email)
+	repo.AssertExpectations(t)
+}
+
+func TestSignUpUser_EmailAlreadyExists(t *testing.T) {
+	repo := new(mockRepository)
+	svc := newTestService(repo)
+
+	req := &SignUpRequest{Email: "existing@example.com", Password: "password123"}
+
+	repo.
+		On("GetUserByEmail", mock.Anything, req.Email).
+		Return(sqlc.User{ID: "user-1", Email: req.Email}, nil)
+
+	resp, err := svc.SignUpUser(req)
+
+	assert.Error(t, err)
+	assert.Empty(t, resp.Email)
+	assert.ErrorContains(t, err, "user already exists")
+	repo.AssertExpectations(t)
+}
+
+func TestSignUpUser_CreateFails(t *testing.T) {
+	repo := new(mockRepository)
+	svc := newTestService(repo)
+
+	req := &SignUpRequest{Email: "new@example.com", Password: "password123"}
+
+	repo.
+		On("GetUserByEmail", mock.Anything, req.Email).
+		Return(sqlc.User{}, errors.New("not found"))
+
+	repo.
+		On("CreateUser", mock.Anything, req).
+		Return(sqlc.User{}, errors.New("db error"))
+
+	resp, err := svc.SignUpUser(req)
+
+	assert.Error(t, err)
+	assert.Empty(t, resp.Email)
+	assert.ErrorContains(t, err, "failed to create user")
 	repo.AssertExpectations(t)
 }
