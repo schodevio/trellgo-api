@@ -8,7 +8,8 @@ import (
 
 type Repository interface {
 	CreateBoard(ctx context.Context, name, userID string) (sqlc.Board, error)
-	GetBoardsByUserID(ctx context.Context, userID string) ([]sqlc.Board, error)
+	GetUserBoards(ctx context.Context, userID string) ([]sqlc.Board, error)
+	GetUserBoardByID(ctx context.Context, id, userID string) (sqlc.Board, error)
 }
 
 type repository struct {
@@ -26,6 +27,13 @@ func (r *repository) CreateBoard(ctx context.Context, name, userID string) (sqlc
 	})
 }
 
-func (r *repository) GetBoardsByUserID(ctx context.Context, userID string) ([]sqlc.Board, error) {
-	return r.queries.GetBoardsByUserID(ctx, userID)
+func (r *repository) GetUserBoards(ctx context.Context, userID string) ([]sqlc.Board, error) {
+	return r.queries.GetUserBoards(ctx, userID)
+}
+
+func (r *repository) GetUserBoardByID(ctx context.Context, id, userID string) (sqlc.Board, error) {
+	return r.queries.GetUserBoardByID(ctx, sqlc.GetUserBoardByIDParams{
+		ID:     id,
+		UserID: userID,
+	})
 }

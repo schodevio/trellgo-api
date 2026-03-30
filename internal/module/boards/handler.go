@@ -23,7 +23,7 @@ func (h *handler) Create(ctx fiber.Ctx) error {
 
 	userID, ok := ctx.Locals("user_id").(string)
 	if !ok || userID == "" {
-		return apierrors.NotFound("user not found")
+		return apierrors.Unauthorized("missing user identity")
 	}
 
 	// Assign current user ID to the requests
@@ -48,6 +48,22 @@ func (h *handler) List(ctx fiber.Ctx) error {
 	}
 
 	resp, err := h.service.ListBoards(userID)
+	if err != nil {
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (h *handler) Show(ctx fiber.Ctx) error {
+	userID, ok := ctx.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return apierrors.Unauthorized("missing user identity")
+	}
+
+	id := ctx.Params("id")
+
+	resp, err := h.service.GetBoard(id, userID)
 	if err != nil {
 		return err
 	}

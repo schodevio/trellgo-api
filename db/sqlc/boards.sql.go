@@ -33,15 +33,39 @@ func (q *Queries) CreateBoard(ctx context.Context, arg CreateBoardParams) (Board
 	return i, err
 }
 
-const getBoardsByUserID = `-- name: GetBoardsByUserID :many
+const getUserBoardByID = `-- name: GetUserBoardByID :one
+SELECT id, name, user_id, created_at, updated_at
+FROM boards
+WHERE id = $1 AND user_id = $2
+`
+
+type GetUserBoardByIDParams struct {
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+}
+
+func (q *Queries) GetUserBoardByID(ctx context.Context, arg GetUserBoardByIDParams) (Board, error) {
+	row := q.db.QueryRow(ctx, getUserBoardByID, arg.ID, arg.UserID)
+	var i Board
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserBoards = `-- name: GetUserBoards :many
 SELECT id, name, user_id, created_at, updated_at
 FROM boards
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) GetBoardsByUserID(ctx context.Context, userID string) ([]Board, error) {
-	rows, err := q.db.Query(ctx, getBoardsByUserID, userID)
+func (q *Queries) GetUserBoards(ctx context.Context, userID string) ([]Board, error) {
+	rows, err := q.db.Query(ctx, getUserBoards, userID)
 	if err != nil {
 		return nil, err
 	}
