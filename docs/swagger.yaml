@@ -88,6 +88,21 @@ definitions:
       board:
         $ref: '#/definitions/boards.BoardResponse'
     type: object
+  boards.UpdateBoardRequest:
+    properties:
+      id:
+        type: string
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      user_id:
+        type: string
+    required:
+    - id
+    - name
+    - user_id
+    type: object
 host: localhost:3000
 info:
   contact: {}
@@ -265,6 +280,49 @@ paths:
       security:
       - BearerAuth: []
       summary: Get a board
+      tags:
+      - boards
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Board ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Board data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/boards.UpdateBoardRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/boards.SingleBoardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a board
       tags:
       - boards
 securityDefinitions:

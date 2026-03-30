@@ -18,6 +18,7 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id string) (User, error)
 	RevokeRefreshToken(ctx context.Context, id string) (RefreshToken, error)
+	UpdateUserBoardByID(ctx context.Context, arg UpdateUserBoardByIDParams) (Board, error)
 }
 
 var _ Querier = (*Queries)(nil)

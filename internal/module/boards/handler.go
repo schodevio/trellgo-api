@@ -100,3 +100,44 @@ func (h *handler) Show(ctx fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(resp)
 }
+
+// Update godoc
+// @Summary      Update a board
+// @Tags         boards
+// @Accept       json
+// @Produce      json
+// @Param        id    path      string              true  "Board ID"
+// @Param        body  body      UpdateBoardRequest  true  "Board data"
+// @Success      200   {object}  SingleBoardResponse
+// @Failure      400   {object}  apierrors.ErrorResponse
+// @Failure      401   {object}  apierrors.ErrorResponse
+// @Failure      404   {object}  apierrors.ErrorResponse
+// @Failure      422   {object}  apierrors.ErrorResponse
+// @Security     BearerAuth
+// @Router       /boards/{id} [patch]
+func (h *handler) Update(ctx fiber.Ctx) error {
+	var req UpdateBoardRequest
+
+	if err := ctx.Bind().Body(&req); err != nil {
+		return apierrors.BadRequest("invalid request body")
+	}
+
+	userID, ok := ctx.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return apierrors.Unauthorized("missing user identity")
+	}
+
+	req.ID = ctx.Params("id")
+	req.UserID = userID
+
+	if err := validator.Validate(&req); err != nil {
+		return err
+	}
+
+	resp, err := h.service.UpdateBoard(&req)
+	if err != nil {
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(resp)
+}

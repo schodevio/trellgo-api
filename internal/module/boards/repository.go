@@ -10,6 +10,7 @@ type Repository interface {
 	CreateBoard(ctx context.Context, name, userID string) (sqlc.Board, error)
 	GetUserBoards(ctx context.Context, userID string) ([]sqlc.Board, error)
 	GetUserBoardByID(ctx context.Context, id, userID string) (sqlc.Board, error)
+	UpdateUserBoardByID(ctx context.Context, name, id, userID string) (sqlc.Board, error)
 }
 
 type repository struct {
@@ -33,6 +34,14 @@ func (r *repository) GetUserBoards(ctx context.Context, userID string) ([]sqlc.B
 
 func (r *repository) GetUserBoardByID(ctx context.Context, id, userID string) (sqlc.Board, error) {
 	return r.queries.GetUserBoardByID(ctx, sqlc.GetUserBoardByIDParams{
+		ID:     id,
+		UserID: userID,
+	})
+}
+
+func (r *repository) UpdateUserBoardByID(ctx context.Context, name, id, userID string) (sqlc.Board, error) {
+	return r.queries.UpdateUserBoardByID(ctx, sqlc.UpdateUserBoardByIDParams{
+		Name:   name,
 		ID:     id,
 		UserID: userID,
 	})

@@ -31,6 +31,11 @@ func (m *mockRepository) GetUserBoardByID(ctx context.Context, id, userID string
 	return args.Get(0).(sqlc.Board), args.Error(1)
 }
 
+func (m *mockRepository) UpdateUserBoardByID(ctx context.Context, name, id, userID string) (sqlc.Board, error) {
+	args := m.Called(ctx, name, id, userID)
+	return args.Get(0).(sqlc.Board), args.Error(1)
+}
+
 // --- tests ---
 
 func TestCreateBoard_Success(t *testing.T) {
@@ -153,6 +158,46 @@ func TestGetBoard_NotFound(t *testing.T) {
 		Return(sqlc.Board{}, errors.New("not found"))
 
 	resp, err := svc.GetBoard("board-1", "user-2")
+
+	assert.Error(t, err)
+	assert.Empty(t, resp.Board.ID)
+	assert.ErrorContains(t, err, "board not found")
+	repo.AssertExpectations(t)
+}
+
+// --- Update ---
+
+func TestUpdateBoard_Success(t *testing.T) {
+	repo := new(mockRepository)
+	svc := newService(repo)
+
+	req := &UpdateBoardRequest{Name: "Renamed", ID: "board-1", UserID: "user-1"}
+	board := sqlc.Board{ID: "board-1", Name: "Renamed", UserID: "user-1"}
+
+	repo.
+		On("UpdateUserBoardByID", mock.Anything, req.Name, req.ID, req.UserID).
+		Return(board, nil)
+
+	resp, err := svc.UpdateBoard(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, board.ID, resp.Board.ID)
+	assert.Equal(t, board.Name, resp.Board.Name)
+	assert.Equal(t, board.UserID, resp.Board.UserID)
+	repo.AssertExpectations(t)
+}
+
+func TestUpdateBoard_NotFound(t *testing.T) {
+	repo := new(mockRepository)
+	svc := newService(repo)
+
+	req := &UpdateBoardRequest{Name: "Renamed", ID: "board-1", UserID: "user-2"}
+
+	repo.
+		On("UpdateUserBoardByID", mock.Anything, req.Name, req.ID, req.UserID).
+		Return(sqlc.Board{}, errors.New("not found"))
+
+	resp, err := svc.UpdateBoard(req)
 
 	assert.Error(t, err)
 	assert.Empty(t, resp.Board.ID)

@@ -5,6 +5,12 @@ type CreateBoardRequest struct {
 	UserID string `json:"user_id" validate:"required"`
 }
 
+type UpdateBoardRequest struct {
+	Name   string `json:"name"    validate:"required,min=1,max=255"`
+	ID     string `json:"id"      validate:"required"`
+	UserID string `json:"user_id" validate:"required"`
+}
+
 type BoardResponse struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`

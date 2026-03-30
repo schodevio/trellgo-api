@@ -89,3 +89,29 @@ func (q *Queries) GetUserBoards(ctx context.Context, userID string) ([]Board, er
 	}
 	return items, nil
 }
+
+const updateUserBoardByID = `-- name: UpdateUserBoardByID :one
+UPDATE boards
+SET name = $1, updated_at = now()
+WHERE id = $2 AND user_id = $3
+RETURNING id, name, user_id, created_at, updated_at
+`
+
+type UpdateUserBoardByIDParams struct {
+	Name   string `json:"name"`
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+}
+
+func (q *Queries) UpdateUserBoardByID(ctx context.Context, arg UpdateUserBoardByIDParams) (Board, error) {
+	row := q.db.QueryRow(ctx, updateUserBoardByID, arg.Name, arg.ID, arg.UserID)
+	var i Board
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

@@ -31,4 +31,5 @@ func (m *Module) RegisterRoutes(router fiber.Router) {
 	group.Post("/", m.handler.Create)
 	group.Get("/", m.handler.List)
 	group.Get("/:id", m.handler.Show)
+	group.Patch("/:id", m.handler.Update)
 }
