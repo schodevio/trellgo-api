@@ -33,8 +33,8 @@ func (m *mockRepository) RevokeRefreshToken(ctx context.Context, id string) erro
 	return args.Error(0)
 }
 
-func (m *mockRepository) CreateUser(ctx context.Context, data *SignUpRequest) (sqlc.User, error) {
-	args := m.Called(ctx, data)
+func (m *mockRepository) CreateUser(ctx context.Context, email, passwordHash string) (sqlc.User, error) {
+	args := m.Called(ctx, email, passwordHash)
 	return args.Get(0).(sqlc.User), args.Error(1)
 }
 
@@ -300,7 +300,7 @@ func TestSignUpUser_Success(t *testing.T) {
 		Return(sqlc.User{}, errors.New("not found"))
 
 	repo.
-		On("CreateUser", mock.Anything, req).
+		On("CreateUser", mock.Anything, req.Email, mock.Anything).
 		Return(user, nil)
 
 	resp, err := svc.SignUpUser(req)
@@ -339,7 +339,7 @@ func TestSignUpUser_CreateFails(t *testing.T) {
 		Return(sqlc.User{}, errors.New("not found"))
 
 	repo.
-		On("CreateUser", mock.Anything, req).
+		On("CreateUser", mock.Anything, req.Email, mock.Anything).
 		Return(sqlc.User{}, errors.New("db error"))
 
 	resp, err := svc.SignUpUser(req)

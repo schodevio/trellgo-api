@@ -1,33 +1,32 @@
-package health
+package boards
 
 import (
 	paseto "aidanwoods.dev/go-paseto"
 	"github.com/gofiber/fiber/v3"
+	"github.com/schodevio/trellgo/db/sqlc"
 	"github.com/schodevio/trellgo/internal/platform/middleware"
 )
 
 type Module struct {
 	Service Service
-	AuthKey paseto.V4SymmetricKey
+	authKey paseto.V4SymmetricKey
 	handler *handler
 }
 
-func New(authKey paseto.V4SymmetricKey) *Module {
-	service := newService(authKey)
+func New(queries *sqlc.Queries, authKey paseto.V4SymmetricKey) *Module {
+	repo := newRepository(queries)
+	service := newService(repo)
 	handler := newHandler(service)
 
 	return &Module{
 		Service: service,
-		AuthKey: authKey,
+		authKey: authKey,
 		handler: handler,
 	}
 }
 
 func (m *Module) RegisterRoutes(router fiber.Router) {
-	group := router.Group("/health")
+	group := router.Group("/boards", middleware.Authenticate(m.authKey))
 
-	group.Get("/", m.handler.HealthCheck)
-
-	protected := group.Group("/", middleware.Authenticate(m.AuthKey))
-	protected.Get("/protected", m.handler.ProtectedCheck)
+	group.Post("/", m.handler.Create)
 }

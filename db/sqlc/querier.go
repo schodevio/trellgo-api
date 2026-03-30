@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	CreateBoard(ctx context.Context, arg CreateBoardParams) (Board, error)
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (RefreshToken, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error)

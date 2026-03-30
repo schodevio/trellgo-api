@@ -15,7 +15,7 @@ type Repository interface {
 	RevokeRefreshToken(ctx context.Context, id string) error
 
 	// Users
-	CreateUser(ctx context.Context, data *SignUpRequest) (sqlc.User, error)
+	CreateUser(ctx context.Context, email, passwordHash string) (sqlc.User, error)
 	GetUserByEmail(ctx context.Context, email string) (sqlc.User, error)
 }
 
@@ -46,14 +46,9 @@ func (r *repository) RevokeRefreshToken(ctx context.Context, id string) error {
 	return err
 }
 
-func (r *repository) CreateUser(ctx context.Context, data *SignUpRequest) (sqlc.User, error) {
-	passwordHash, err := hashPassword(data.Password)
-	if err != nil {
-		return sqlc.User{}, err
-	}
-
+func (r *repository) CreateUser(ctx context.Context, email, passwordHash string) (sqlc.User, error) {
 	return r.queries.CreateUser(ctx, sqlc.CreateUserParams{
-		Email:        data.Email,
+		Email:        email,
 		PasswordHash: passwordHash,
 	})
 }

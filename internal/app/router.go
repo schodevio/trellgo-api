@@ -8,5 +8,6 @@ func setupRoutes(app *fiber.App, c *Container) {
 	api := app.Group("/api/v1")
 
 	c.Auth.RegisterRoutes(api)
+	c.Boards.RegisterRoutes(api)
 	c.Health.RegisterRoutes(api)
 }

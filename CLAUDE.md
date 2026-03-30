@@ -166,6 +166,30 @@ Error response shape:
 
 ---
 
+## Layer Responsibilities & Parameter Passing
+
+Each layer accepts parameters appropriate to its abstraction level:
+
+- **Handler** → passes `*Request` DTO to service
+- **Service** → accepts `*Request` DTO; performs business logic (hashing, validation, etc.) before calling repo
+- **Repository** → accepts only **primitives** (`string`, `int`, `time.Time`, etc.) — no DTO dependencies
+
+```go
+// Service calls repo with primitives
+func (s *service) CreateUser(data *SignUpRequest) (SignUpResponse, error) {
+    hash, err := hashPassword(data.Password)
+    // ...
+    user, err := s.repo.CreateUser(ctx, data.Email, hash)
+}
+
+// Repository interface uses only primitives
+type Repository interface {
+    CreateUser(ctx context.Context, email, passwordHash string) (sqlc.User, error)
+}
+```
+
+---
+
 ## Handler Pattern
 
 ```go

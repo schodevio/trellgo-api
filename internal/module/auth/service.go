@@ -84,7 +84,12 @@ func (s *service) SignUpUser(data *SignUpRequest) (SignUpResponse, error) {
 		return SignUpResponse{}, apierrors.Conflict("user already exists")
 	}
 
-	user, err := s.repo.CreateUser(context.Background(), data)
+	passwordHash, err := hashPassword(data.Password)
+	if err != nil {
+		return SignUpResponse{}, apierrors.Internal("failed to hash password")
+	}
+
+	user, err := s.repo.CreateUser(context.Background(), data.Email, passwordHash)
 	if err != nil {
 		return SignUpResponse{}, apierrors.Internal("failed to create user")
 	}

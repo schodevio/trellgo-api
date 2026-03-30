@@ -9,6 +9,7 @@ import (
 
 	"github.com/schodevio/trellgo/db/sqlc"
 	"github.com/schodevio/trellgo/internal/module/auth"
+	"github.com/schodevio/trellgo/internal/module/boards"
 	"github.com/schodevio/trellgo/internal/module/health"
 	"github.com/schodevio/trellgo/internal/platform/config"
 	"github.com/schodevio/trellgo/internal/platform/db"
@@ -18,6 +19,7 @@ type Container struct {
 	DB     *pgxpool.Pool
 	Health *health.Module
 	Auth   *auth.Module
+	Boards *boards.Module
 }
 
 func NewContainer(ctx context.Context, cfg *config.Config) *Container {
@@ -31,10 +33,12 @@ func NewContainer(ctx context.Context, cfg *config.Config) *Container {
 
 	healthModule := health.New(authKey)
 	authModule := auth.New(queries, authKey)
+	boardsModule := boards.New(queries, authKey)
 
 	return &Container{
 		DB:     pool,
 		Health: healthModule,
 		Auth:   authModule,
+		Boards: boardsModule,
 	}
 }
