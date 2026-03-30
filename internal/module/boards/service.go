@@ -7,7 +7,8 @@ import (
 )
 
 type Service interface {
-	CreateBoard(req *CreateBoardRequest) (CreateBoardResponse, error)
+	CreateBoard(req *CreateBoardRequest) (SingleBoardResponse, error)
+	ListBoards(userID string) (ListBoardsResponse, error)
 }
 
 type service struct {
@@ -18,17 +19,39 @@ func newService(repo Repository) Service {
 	return &service{repo: repo}
 }
 
-func (s *service) CreateBoard(req *CreateBoardRequest) (CreateBoardResponse, error) {
+func (s *service) CreateBoard(req *CreateBoardRequest) (SingleBoardResponse, error) {
 	board, err := s.repo.CreateBoard(context.Background(), req.Name, req.UserID)
 	if err != nil {
-		return CreateBoardResponse{}, apierrors.Internal("failed to create board")
+		return SingleBoardResponse{}, apierrors.Internal("failed to create board")
 	}
 
-	return CreateBoardResponse{
-		ID:        board.ID,
-		Name:      board.Name,
-		UserID:    board.UserID,
-		CreatedAt: board.CreatedAt.Time.String(),
-		UpdatedAt: board.UpdatedAt.Time.String(),
+	return SingleBoardResponse{
+		Board: BoardResponse{
+			ID:        board.ID,
+			Name:      board.Name,
+			UserID:    board.UserID,
+			CreatedAt: board.CreatedAt.Time.String(),
+			UpdatedAt: board.UpdatedAt.Time.String(),
+		},
 	}, nil
+}
+
+func (s *service) ListBoards(userID string) (ListBoardsResponse, error) {
+	boards, err := s.repo.GetBoardsByUserID(context.Background(), userID)
+	if err != nil {
+		return ListBoardsResponse{}, apierrors.Internal("failed to fetch boards")
+	}
+
+	items := make([]BoardResponse, 0, len(boards))
+	for _, b := range boards {
+		items = append(items, BoardResponse{
+			ID:        b.ID,
+			Name:      b.Name,
+			UserID:    b.UserID,
+			CreatedAt: b.CreatedAt.Time.String(),
+			UpdatedAt: b.UpdatedAt.Time.String(),
+		})
+	}
+
+	return ListBoardsResponse{Boards: items}, nil
 }

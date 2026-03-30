@@ -32,3 +32,36 @@ func (q *Queries) CreateBoard(ctx context.Context, arg CreateBoardParams) (Board
 	)
 	return i, err
 }
+
+const getBoardsByUserID = `-- name: GetBoardsByUserID :many
+SELECT id, name, user_id, created_at, updated_at
+FROM boards
+WHERE user_id = $1
+ORDER BY created_at DESC
+`
+
+func (q *Queries) GetBoardsByUserID(ctx context.Context, userID string) ([]Board, error) {
+	rows, err := q.db.Query(ctx, getBoardsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Board
+	for rows.Next() {
+		var i Board
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.UserID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

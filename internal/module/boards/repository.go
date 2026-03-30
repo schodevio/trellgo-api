@@ -8,6 +8,7 @@ import (
 
 type Repository interface {
 	CreateBoard(ctx context.Context, name, userID string) (sqlc.Board, error)
+	GetBoardsByUserID(ctx context.Context, userID string) ([]sqlc.Board, error)
 }
 
 type repository struct {
@@ -23,4 +24,8 @@ func (r *repository) CreateBoard(ctx context.Context, name, userID string) (sqlc
 		Name:   name,
 		UserID: userID,
 	})
+}
+
+func (r *repository) GetBoardsByUserID(ctx context.Context, userID string) ([]sqlc.Board, error) {
+	return r.queries.GetBoardsByUserID(ctx, userID)
 }

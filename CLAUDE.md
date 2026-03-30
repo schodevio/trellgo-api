@@ -108,7 +108,7 @@ make migrate-status   # check state
 ## DTOs (dto.go)
 
 - Request structs: suffix `Request` (e.g. `SignUpRequest`)
-- Response structs: suffix `Response` (e.g. `SignUpResponse`)
+- Response structs: suffix `Response` (e.g. `BoardResponse`)
 - Always use `json` struct tags with snake_case keys
 - Always add `validate` tags for input structs
 
@@ -118,6 +118,31 @@ type SignUpRequest struct {
     Password string `json:"password" validate:"required,min=8"`
 }
 ```
+
+### Response envelope pattern
+
+All responses use a **root key** wrapper — never return a bare struct or array.
+
+- Data struct: plain suffix `Response` (e.g. `BoardResponse`) — reusable, no wrapper
+- Single resource: `Single<Name>Response` with field named after the resource
+- Collection: `List<Name>Response` with plural field
+
+```go
+type BoardResponse struct {
+    ID   string `json:"id"`
+    Name string `json:"name"`
+}
+
+type SingleBoardResponse struct {
+    Board BoardResponse `json:"board"`
+}
+
+type ListBoardsResponse struct {
+    Boards []BoardResponse `json:"boards"`
+}
+```
+
+This allows adding metadata (e.g. `total`, `page`) without breaking changes.
 
 ---
 

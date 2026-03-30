@@ -29,4 +29,5 @@ func (m *Module) RegisterRoutes(router fiber.Router) {
 	group := router.Group("/boards", middleware.Authenticate(m.authKey))
 
 	group.Post("/", m.handler.Create)
+	group.Get("/", m.handler.List)
 }

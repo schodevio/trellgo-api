@@ -40,3 +40,17 @@ func (h *handler) Create(ctx fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusCreated).JSON(resp)
 }
+
+func (h *handler) List(ctx fiber.Ctx) error {
+	userID, ok := ctx.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return apierrors.Unauthorized("missing user identity")
+	}
+
+	resp, err := h.service.ListBoards(userID)
+	if err != nil {
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(resp)
+}
