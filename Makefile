@@ -1,4 +1,4 @@
-.PHONY: dev build run clean test migrate-up migrate-down migrate-status migrate-create sqlc
+.PHONY: dev build run clean test migrate-up migrate-down migrate-status migrate-create sqlc docs
 
 MIGRATIONS_DIR=db/migrations
 DB_URL=$(shell grep DB_URL .env | cut -d '=' -f2-)
@@ -33,3 +33,6 @@ migrate-create:
 
 sqlc:
 	sqlc generate
+
+docs:
+	swag init -g cmd/api/main.go --output docs

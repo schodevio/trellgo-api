@@ -12,6 +12,7 @@ type Service interface {
 	RefreshToken(data *RefreshRequest) (SignInResponse, error)
 	SignUpUser(data *SignUpRequest) (SignUpResponse, error)
 	SignInUser(data *SignInRequest) (SignInResponse, error)
+	SignOut(token string) error
 }
 
 type service struct {
@@ -95,6 +96,19 @@ func (s *service) SignUpUser(data *SignUpRequest) (SignUpResponse, error) {
 	}
 
 	return SignUpResponse{Email: user.Email}, nil
+}
+
+func (s *service) SignOut(token string) error {
+	stored, err := s.repo.GetRefreshTokenByRawToken(context.Background(), token)
+	if err != nil {
+		return apierrors.Unauthorized("invalid or expired refresh token")
+	}
+
+	if err := s.repo.RevokeRefreshToken(context.Background(), stored.ID); err != nil {
+		return apierrors.Internal("failed to sign out")
+	}
+
+	return nil
 }
 
 // private

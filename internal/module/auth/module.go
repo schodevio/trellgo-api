@@ -30,4 +30,5 @@ func (m *Module) RegisterRoutes(router fiber.Router) {
 	group.Post("/refresh", m.handler.Refresh)
 	group.Post("/signin", m.handler.SignIn)
 	group.Post("/signup", m.handler.SignUp)
+	group.Delete("/signout", m.handler.SignOut)
 }

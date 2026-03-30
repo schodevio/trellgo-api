@@ -349,3 +349,65 @@ func TestSignUpUser_CreateFails(t *testing.T) {
 	assert.ErrorContains(t, err, "failed to create user")
 	repo.AssertExpectations(t)
 }
+
+// --- SignOut ---
+
+func TestSignOut_Success(t *testing.T) {
+	repo := new(mockRepository)
+	svc, key := newTestServiceWithKey(repo)
+
+	token := validRefreshToken(key, "user-1")
+	stored := sqlc.RefreshToken{ID: "rt-1", UserID: "user-1"}
+
+	repo.
+		On("GetRefreshTokenByRawToken", mock.Anything, token).
+		Return(stored, nil)
+
+	repo.
+		On("RevokeRefreshToken", mock.Anything, stored.ID).
+		Return(nil)
+
+	err := svc.SignOut(token)
+
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
+func TestSignOut_TokenNotFound(t *testing.T) {
+	repo := new(mockRepository)
+	svc, key := newTestServiceWithKey(repo)
+
+	token := validRefreshToken(key, "user-1")
+
+	repo.
+		On("GetRefreshTokenByRawToken", mock.Anything, token).
+		Return(sqlc.RefreshToken{}, errors.New("not found"))
+
+	err := svc.SignOut(token)
+
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "invalid or expired refresh token")
+	repo.AssertExpectations(t)
+}
+
+func TestSignOut_RevokeFails(t *testing.T) {
+	repo := new(mockRepository)
+	svc, key := newTestServiceWithKey(repo)
+
+	token := validRefreshToken(key, "user-1")
+	stored := sqlc.RefreshToken{ID: "rt-1", UserID: "user-1"}
+
+	repo.
+		On("GetRefreshTokenByRawToken", mock.Anything, token).
+		Return(stored, nil)
+
+	repo.
+		On("RevokeRefreshToken", mock.Anything, stored.ID).
+		Return(errors.New("db error"))
+
+	err := svc.SignOut(token)
+
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "failed to sign out")
+	repo.AssertExpectations(t)
+}

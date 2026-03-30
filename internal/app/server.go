@@ -23,9 +23,10 @@ func NewServer(cfg *config.Config) *Server {
 	ctx := context.Background()
 
 	app := fiber.New(fiber.Config{
-		AppName:      "TrellGo",
-		BodyLimit:    1 * 1024 * 1024, // 1MB
-		ErrorHandler: ErrorHandler,
+		AppName:        "TrellGo",
+		BodyLimit:      1 * 1024 * 1024, // 1MB
+		ReadBufferSize: 16 * 1024,       // 16KB — handles large browser headers
+		ErrorHandler:   ErrorHandler,
 	})
 
 	app.Use(recover.New())

@@ -14,6 +14,18 @@ func newHandler(service Service) *handler {
 	return &handler{service: service}
 }
 
+// Create godoc
+// @Summary      Create a board
+// @Tags         boards
+// @Accept       json
+// @Produce      json
+// @Param        body  body      CreateBoardRequest  true  "Board data"
+// @Success      201   {object}  SingleBoardResponse
+// @Failure      400   {object}  apierrors.ErrorResponse
+// @Failure      401   {object}  apierrors.ErrorResponse
+// @Failure      422   {object}  apierrors.ErrorResponse
+// @Security     BearerAuth
+// @Router       /boards [post]
 func (h *handler) Create(ctx fiber.Ctx) error {
 	var req CreateBoardRequest
 
@@ -41,6 +53,14 @@ func (h *handler) Create(ctx fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(resp)
 }
 
+// List godoc
+// @Summary      List boards
+// @Tags         boards
+// @Produce      json
+// @Success      200  {object}  ListBoardsResponse
+// @Failure      401  {object}  apierrors.ErrorResponse
+// @Security     BearerAuth
+// @Router       /boards [get]
 func (h *handler) List(ctx fiber.Ctx) error {
 	userID, ok := ctx.Locals("user_id").(string)
 	if !ok || userID == "" {
@@ -55,6 +75,16 @@ func (h *handler) List(ctx fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(resp)
 }
 
+// Show godoc
+// @Summary      Get a board
+// @Tags         boards
+// @Produce      json
+// @Param        id   path      string  true  "Board ID"
+// @Success      200  {object}  SingleBoardResponse
+// @Failure      401  {object}  apierrors.ErrorResponse
+// @Failure      404  {object}  apierrors.ErrorResponse
+// @Security     BearerAuth
+// @Router       /boards/{id} [get]
 func (h *handler) Show(ctx fiber.Ctx) error {
 	userID, ok := ctx.Locals("user_id").(string)
 	if !ok || userID == "" {
