@@ -70,11 +70,8 @@ definitions:
         maxLength: 255
         minLength: 1
         type: string
-      user_id:
-        type: string
     required:
     - name
-    - user_id
     type: object
   boards.ListBoardsResponse:
     properties:
@@ -90,18 +87,12 @@ definitions:
     type: object
   boards.UpdateBoardRequest:
     properties:
-      id:
-        type: string
       name:
         maxLength: 255
         minLength: 1
         type: string
-      user_id:
-        type: string
     required:
-    - id
     - name
-    - user_id
     type: object
 host: localhost:3000
 info:
@@ -255,6 +246,31 @@ paths:
       tags:
       - boards
   /boards/{id}:
+    delete:
+      parameters:
+      - description: Board ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a board
+      tags:
+      - boards
     get:
       parameters:
       - description: Board ID

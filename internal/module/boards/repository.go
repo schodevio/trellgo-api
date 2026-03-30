@@ -11,6 +11,7 @@ type Repository interface {
 	GetUserBoards(ctx context.Context, userID string) ([]sqlc.Board, error)
 	GetUserBoardByID(ctx context.Context, id, userID string) (sqlc.Board, error)
 	UpdateUserBoardByID(ctx context.Context, name, id, userID string) (sqlc.Board, error)
+	DeleteUserBoardByID(ctx context.Context, id, userID string) error
 }
 
 type repository struct {
@@ -42,6 +43,13 @@ func (r *repository) GetUserBoardByID(ctx context.Context, id, userID string) (s
 func (r *repository) UpdateUserBoardByID(ctx context.Context, name, id, userID string) (sqlc.Board, error) {
 	return r.queries.UpdateUserBoardByID(ctx, sqlc.UpdateUserBoardByIDParams{
 		Name:   name,
+		ID:     id,
+		UserID: userID,
+	})
+}
+
+func (r *repository) DeleteUserBoardByID(ctx context.Context, id, userID string) error {
+	return r.queries.DeleteUserBoardByID(ctx, sqlc.DeleteUserBoardByIDParams{
 		ID:     id,
 		UserID: userID,
 	})

@@ -33,6 +33,21 @@ func (q *Queries) CreateBoard(ctx context.Context, arg CreateBoardParams) (Board
 	return i, err
 }
 
+const deleteUserBoardByID = `-- name: DeleteUserBoardByID :exec
+DELETE FROM boards
+WHERE id = $1 AND user_id = $2
+`
+
+type DeleteUserBoardByIDParams struct {
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+}
+
+func (q *Queries) DeleteUserBoardByID(ctx context.Context, arg DeleteUserBoardByIDParams) error {
+	_, err := q.db.Exec(ctx, deleteUserBoardByID, arg.ID, arg.UserID)
+	return err
+}
+
 const getUserBoardByID = `-- name: GetUserBoardByID :one
 SELECT id, name, user_id, created_at, updated_at
 FROM boards

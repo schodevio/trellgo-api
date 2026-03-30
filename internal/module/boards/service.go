@@ -11,6 +11,7 @@ type Service interface {
 	ListBoards(userID string) (ListBoardsResponse, error)
 	GetBoard(id, userID string) (SingleBoardResponse, error)
 	UpdateBoard(req *UpdateBoardRequest) (SingleBoardResponse, error)
+	DeleteBoard(id, userID string) error
 }
 
 type service struct {
@@ -90,4 +91,12 @@ func (s *service) UpdateBoard(req *UpdateBoardRequest) (SingleBoardResponse, err
 			UpdatedAt: board.UpdatedAt.Time.String(),
 		},
 	}, nil
+}
+
+func (s *service) DeleteBoard(id, userID string) error {
+	if err := s.repo.DeleteUserBoardByID(context.Background(), id, userID); err != nil {
+		return apierrors.NotFound("board not found")
+	}
+
+	return nil
 }

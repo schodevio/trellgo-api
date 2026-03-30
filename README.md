@@ -93,27 +93,24 @@ docs/             # Generated OpenAPI spec (do not edit manually)
 
 ## API
 
-All endpoints (except auth and health) require a Bearer token:
-```
-Authorization: Bearer <access_token>
-```
+> Endpoints marked with a lock require a Bearer token: `Authorization: Bearer <access_token>`
 
 ### Health
 
+<details>
+<summary><code>GET /api/v1/health</code></summary>
+
+Response `200`:
+```json
+{ "status": "ok" }
 ```
-GET /api/v1/health
-```
+
+</details>
 
 ### Auth
 
-```
-POST   /api/v1/auth/signup
-POST   /api/v1/auth/signin
-POST   /api/v1/auth/refresh
-DELETE /api/v1/auth/signout
-```
-
-**Sign up — `POST /api/v1/auth/signup`**
+<details>
+<summary><code>POST /api/v1/auth/signup</code></summary>
 
 Request:
 ```json
@@ -124,7 +121,10 @@ Response `201`:
 { "email": "user@example.com" }
 ```
 
-**Sign in — `POST /api/v1/auth/signin`**
+</details>
+
+<details>
+<summary><code>POST /api/v1/auth/signin</code></summary>
 
 Request:
 ```json
@@ -136,19 +136,38 @@ Response `200`:
 ```
 The refresh token is set as an `HttpOnly` cookie.
 
-**Sign out — `DELETE /api/v1/auth/signout`**
+</details>
 
-Revokes the refresh token cookie. Response `204`.
+<details>
+<summary><code>POST /api/v1/auth/refresh</code></summary>
+
+Reads the refresh token from the `HttpOnly` cookie and issues a new access token.
+
+Response `200`:
+```json
+{ "access_token": "<token>" }
+```
+
+</details>
+
+<details>
+<summary><code>DELETE /api/v1/auth/signout</code></summary>
+
+Revokes the refresh token cookie.
+
+Response `204`.
+
+</details>
 
 ### Boards
 
+All boards endpoints require a Bearer token:
 ```
-POST /api/v1/boards
-GET  /api/v1/boards
-GET  /api/v1/boards/:id
+Authorization: Bearer <access_token>
 ```
 
-**Create — `POST /api/v1/boards`**
+<details>
+<summary><code>POST /api/v1/boards</code></summary>
 
 Request:
 ```json
@@ -159,20 +178,50 @@ Response `201`:
 { "board": { "id": "...", "name": "My Board", "user_id": "...", "created_at": "...", "updated_at": "..." } }
 ```
 
-**List — `GET /api/v1/boards`**
+</details>
+
+<details>
+<summary><code>GET /api/v1/boards</code></summary>
 
 Response `200`:
 ```json
-{ "boards": [ { "id": "...", "name": "My Board", ... } ] }
+{ "boards": [ { "id": "...", "name": "My Board", "user_id": "...", "created_at": "...", "updated_at": "..." } ] }
 ```
 
-**Get — `GET /api/v1/boards/:id`**
+</details>
+
+<details>
+<summary><code>GET /api/v1/boards/:id</code></summary>
 
 Response `200`:
 ```json
-{ "board": { "id": "...", "name": "My Board", ... } }
+{ "board": { "id": "...", "name": "My Board", "user_id": "...", "created_at": "...", "updated_at": "..." } }
 ```
 Returns `404` if the board does not belong to the authenticated user.
+
+</details>
+
+<details>
+<summary><code>PATCH /api/v1/boards/:id</code></summary>
+
+Request:
+```json
+{ "name": "Renamed Board" }
+```
+Response `200`:
+```json
+{ "board": { "id": "...", "name": "Renamed Board", "user_id": "...", "created_at": "...", "updated_at": "..." } }
+```
+Returns `404` if the board does not belong to the authenticated user.
+
+</details>
+
+<details>
+<summary><code>DELETE /api/v1/boards/:id</code></summary>
+
+Response `204`. Returns `404` if the board does not belong to the authenticated user.
+
+</details>
 
 ### Error format
 

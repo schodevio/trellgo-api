@@ -32,4 +32,5 @@ func (m *Module) RegisterRoutes(router fiber.Router) {
 	group.Get("/", m.handler.List)
 	group.Get("/:id", m.handler.Show)
 	group.Patch("/:id", m.handler.Update)
+	group.Delete("/:id", m.handler.Delete)
 }

@@ -36,6 +36,11 @@ func (m *mockRepository) UpdateUserBoardByID(ctx context.Context, name, id, user
 	return args.Get(0).(sqlc.Board), args.Error(1)
 }
 
+func (m *mockRepository) DeleteUserBoardByID(ctx context.Context, id, userID string) error {
+	args := m.Called(ctx, id, userID)
+	return args.Error(0)
+}
+
 // --- tests ---
 
 func TestCreateBoard_Success(t *testing.T) {
@@ -201,6 +206,37 @@ func TestUpdateBoard_NotFound(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Empty(t, resp.Board.ID)
+	assert.ErrorContains(t, err, "board not found")
+	repo.AssertExpectations(t)
+}
+
+// --- Delete ---
+
+func TestDeleteBoard_Success(t *testing.T) {
+	repo := new(mockRepository)
+	svc := newService(repo)
+
+	repo.
+		On("DeleteUserBoardByID", mock.Anything, "board-1", "user-1").
+		Return(nil)
+
+	err := svc.DeleteBoard("board-1", "user-1")
+
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
+func TestDeleteBoard_NotFound(t *testing.T) {
+	repo := new(mockRepository)
+	svc := newService(repo)
+
+	repo.
+		On("DeleteUserBoardByID", mock.Anything, "board-1", "user-2").
+		Return(errors.New("not found"))
+
+	err := svc.DeleteBoard("board-1", "user-2")
+
+	assert.Error(t, err)
 	assert.ErrorContains(t, err, "board not found")
 	repo.AssertExpectations(t)
 }

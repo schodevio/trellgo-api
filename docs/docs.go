@@ -286,6 +286,46 @@ const docTemplate = `{
                     }
                 }
             },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "boards"
+                ],
+                "summary": "Delete a board",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Board ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apierrors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/apierrors.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "patch": {
                 "security": [
                     {
@@ -457,17 +497,13 @@ const docTemplate = `{
         "boards.CreateBoardRequest": {
             "type": "object",
             "required": [
-                "name",
-                "user_id"
+                "name"
             ],
             "properties": {
                 "name": {
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 1
-                },
-                "user_id": {
-                    "type": "string"
                 }
             }
         },
@@ -493,21 +529,13 @@ const docTemplate = `{
         "boards.UpdateBoardRequest": {
             "type": "object",
             "required": [
-                "id",
-                "name",
-                "user_id"
+                "name"
             ],
             "properties": {
-                "id": {
-                    "type": "string"
-                },
                 "name": {
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 1
-                },
-                "user_id": {
-                    "type": "string"
                 }
             }
         }
