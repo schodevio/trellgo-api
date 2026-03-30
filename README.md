@@ -24,6 +24,7 @@ Copy and adjust the default values in `.env`:
 ```env
 DB_URL=postgres://postgres:postgres@postgres:5432/trellgo_development?sslmode=disable
 PORT=3000
+SECRET_KEY=<hex-encoded 32-byte key>
 ```
 
 ### Run migrations
@@ -49,61 +50,132 @@ make build && ./tmp/main
 | `make dev` | Start server with hot reload (Air) |
 | `make build` | Compile binary to `./tmp/main` |
 | `make run` | Run without building a binary |
+| `make test` | Run all tests |
 | `make migrate-up` | Apply pending migrations |
 | `make migrate-down` | Rollback last migration |
 | `make migrate-status` | Show migration status |
 | `make migrate-create` | Create a new migration file |
 | `make sqlc` | Regenerate database code from SQL |
+| `make docs` | Regenerate OpenAPI spec (`docs/`) |
+
+## API Documentation
+
+Interactive documentation is available when the server is running:
+
+| URL | Description |
+|---|---|
+| `/swagger` | Swagger UI — interactive, supports "Try it out" |
+| `/docs` | ReDoc — clean three-panel layout |
 
 ## Project Structure
 
 ```
 cmd/api/          # Entrypoint
 internal/
-  app/            # Server bootstrap, router, middleware, container
+  app/            # Server bootstrap, router, middleware, DI container
   module/         # Feature modules (each owns handler/service/repository)
-    auth/
+    auth/         # Sign up, sign in, sign out, token refresh
+    boards/       # Boards CRUD
+    health/       # Health check
   platform/       # Shared infrastructure
     apierrors/    # Typed API errors
     config/       # Environment config
     db/           # pgxpool setup
+    docs/         # Swagger UI + ReDoc route registration
+    middleware/   # Auth, CORS, logger
     validator/    # Request validation → i18n-friendly error keys
 db/
   migrations/     # Goose SQL migrations
   queries/        # sqlc SQL queries
   sqlc/           # Generated Go code (do not edit)
+docs/             # Generated OpenAPI spec (do not edit manually)
 ```
 
 ## API
 
+All endpoints (except auth and health) require a Bearer token:
+```
+Authorization: Bearer <access_token>
+```
+
 ### Health
 
 ```
-GET /health
+GET /api/v1/health
 ```
 
 ### Auth
 
 ```
-POST /api/v1/auth/signup
+POST   /api/v1/auth/signup
+POST   /api/v1/auth/signin
+POST   /api/v1/auth/refresh
+DELETE /api/v1/auth/signout
 ```
 
-**Request**
+**Sign up — `POST /api/v1/auth/signup`**
+
+Request:
 ```json
-{
-  "email": "user@example.com",
-  "password": "secret123"
-}
+{ "email": "user@example.com", "password": "secret123" }
 ```
-
-**Response `201`**
+Response `201`:
 ```json
-{
-  "email": "user@example.com"
-}
+{ "email": "user@example.com" }
 ```
 
-**Validation errors `422`**
+**Sign in — `POST /api/v1/auth/signin`**
+
+Request:
+```json
+{ "email": "user@example.com", "password": "secret123" }
+```
+Response `200`:
+```json
+{ "access_token": "<token>" }
+```
+The refresh token is set as an `HttpOnly` cookie.
+
+**Sign out — `DELETE /api/v1/auth/signout`**
+
+Revokes the refresh token cookie. Response `204`.
+
+### Boards
+
+```
+POST /api/v1/boards
+GET  /api/v1/boards
+GET  /api/v1/boards/:id
+```
+
+**Create — `POST /api/v1/boards`**
+
+Request:
+```json
+{ "name": "My Board" }
+```
+Response `201`:
+```json
+{ "board": { "id": "...", "name": "My Board", "user_id": "...", "created_at": "...", "updated_at": "..." } }
+```
+
+**List — `GET /api/v1/boards`**
+
+Response `200`:
+```json
+{ "boards": [ { "id": "...", "name": "My Board", ... } ] }
+```
+
+**Get — `GET /api/v1/boards/:id`**
+
+Response `200`:
+```json
+{ "board": { "id": "...", "name": "My Board", ... } }
+```
+Returns `404` if the board does not belong to the authenticated user.
+
+### Error format
+
 ```json
 {
   "error": {
