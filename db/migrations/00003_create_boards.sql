@@ -7,5 +7,8 @@ CREATE TABLE boards (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE INDEX idx_boards_user_id ON boards(user_id);
+
 -- +goose Down
+DROP INDEX IF EXISTS idx_boards_user_id;
 DROP TABLE IF EXISTS boards;

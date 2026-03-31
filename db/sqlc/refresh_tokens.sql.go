@@ -12,8 +12,8 @@ import (
 )
 
 const createRefreshToken = `-- name: CreateRefreshToken :one
-INSERT INTO refresh_tokens (user_id, token_hash, expires_at, user_agent, ip_address, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, now(), now())
+INSERT INTO refresh_tokens (user_id, token_hash, expires_at, user_agent, ip_address)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING id, user_id, token_hash, expires_at, revoked_at, user_agent, ip_address, created_at, updated_at
 `
 

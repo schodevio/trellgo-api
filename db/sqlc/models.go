@@ -16,6 +16,15 @@ type Board struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type List struct {
+	ID        string             `json:"id"`
+	Name      string             `json:"name"`
+	BoardID   string             `json:"board_id"`
+	Position  int32              `json:"position"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type RefreshToken struct {
 	ID        string             `json:"id"`
 	UserID    string             `json:"user_id"`

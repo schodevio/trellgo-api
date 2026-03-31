@@ -94,6 +94,39 @@ definitions:
     required:
     - name
     type: object
+  lists.CreateListRequest:
+    properties:
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      position:
+        minimum: 0
+        type: integer
+    required:
+    - name
+    - position
+    type: object
+  lists.ListResponse:
+    properties:
+      board_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      position:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  lists.SingleListResponse:
+    properties:
+      list:
+        $ref: '#/definitions/lists.ListResponse'
+    type: object
 host: localhost:3000
 info:
   contact: {}
@@ -245,6 +278,46 @@ paths:
       summary: Create a board
       tags:
       - boards
+  /boards/{board_id}/lists:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Board ID
+        in: path
+        name: board_id
+        required: true
+        type: string
+      - description: List data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/lists.CreateListRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/lists.SingleListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a list
+      tags:
+      - lists
   /boards/{id}:
     delete:
       parameters:

@@ -13,4 +13,5 @@ func setupRoutes(app *fiber.App, c *Container) {
 	c.Auth.RegisterRoutes(api)
 	c.Boards.RegisterRoutes(api)
 	c.Health.RegisterRoutes(api)
+	c.Lists.RegisterRoutes(api)
 }
