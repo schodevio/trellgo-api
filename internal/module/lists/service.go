@@ -7,18 +7,27 @@ import (
 )
 
 type Service interface {
-	CreateList(boardID string, req *CreateListRequest) (SingleListResponse, error)
+	CreateList(boardID, userID string, req *CreateListRequest) (SingleListResponse, error)
+}
+
+type boardGuard interface {
+	IsOwner(boardID, userID string) error
 }
 
 type service struct {
-	repo Repository
+	repo       Repository
+	boardGuard boardGuard
 }
 
-func newService(repo Repository) Service {
-	return &service{repo: repo}
+func newService(repo Repository, boardGuard boardGuard) Service {
+	return &service{repo: repo, boardGuard: boardGuard}
 }
 
-func (s *service) CreateList(boardID string, req *CreateListRequest) (SingleListResponse, error) {
+func (s *service) CreateList(boardID, userID string, req *CreateListRequest) (SingleListResponse, error) {
+	if err := s.boardGuard.IsOwner(boardID, userID); err != nil {
+		return SingleListResponse{}, err
+	}
+
 	list, err := s.repo.CreateList(context.Background(), req.Name, boardID, req.Position)
 	if err != nil {
 		return SingleListResponse{}, apierrors.Internal("failed to create list")

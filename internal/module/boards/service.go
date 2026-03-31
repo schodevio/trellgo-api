@@ -12,6 +12,7 @@ type Service interface {
 	GetBoard(id, userID string) (SingleBoardResponse, error)
 	UpdateBoard(req *UpdateBoardRequest) (SingleBoardResponse, error)
 	DeleteBoard(id, userID string) error
+	IsOwner(id, userID string) error
 }
 
 type service struct {
@@ -95,6 +96,15 @@ func (s *service) UpdateBoard(req *UpdateBoardRequest) (SingleBoardResponse, err
 
 func (s *service) DeleteBoard(id, userID string) error {
 	if err := s.repo.DeleteUserBoardByID(context.Background(), id, userID); err != nil {
+		return apierrors.NotFound("board not found")
+	}
+
+	return nil
+}
+
+func (s *service) IsOwner(id, userID string) error {
+	_, err := s.repo.GetUserBoardByID(context.Background(), id, userID)
+	if err != nil {
 		return apierrors.NotFound("board not found")
 	}
 

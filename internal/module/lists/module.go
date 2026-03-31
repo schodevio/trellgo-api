@@ -3,7 +3,9 @@ package lists
 import (
 	paseto "aidanwoods.dev/go-paseto"
 	"github.com/gofiber/fiber/v3"
+
 	"github.com/schodevio/trellgo/db/sqlc"
+	"github.com/schodevio/trellgo/internal/module/boards"
 	"github.com/schodevio/trellgo/internal/platform/middleware"
 )
 
@@ -13,9 +15,9 @@ type Module struct {
 	handler *handler
 }
 
-func New(queries *sqlc.Queries, authKey paseto.V4SymmetricKey) *Module {
+func New(queries *sqlc.Queries, authKey paseto.V4SymmetricKey, boardsService boards.Service) *Module {
 	repo := newRepository(queries)
-	service := newService(repo)
+	service := newService(repo, boardsService)
 	handler := newHandler(service)
 
 	return &Module{

@@ -43,200 +43,243 @@ func (m *mockRepository) DeleteUserBoardByID(ctx context.Context, id, userID str
 
 // --- tests ---
 
-func TestCreateBoard_Success(t *testing.T) {
-	repo := new(mockRepository)
-	svc := newService(repo)
+func TestCreateBoard(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
 
-	req := &CreateBoardRequest{Name: "My Board", UserID: "user-1"}
-	board := sqlc.Board{ID: "board-1", Name: "My Board", UserID: "user-1"}
+		req := &CreateBoardRequest{Name: "My Board", UserID: "user-1"}
+		board := sqlc.Board{ID: "board-1", Name: "My Board", UserID: "user-1"}
 
-	repo.
-		On("CreateBoard", mock.Anything, req.Name, req.UserID).
-		Return(board, nil)
+		repo.
+			On("CreateBoard", mock.Anything, req.Name, req.UserID).
+			Return(board, nil)
 
-	resp, err := svc.CreateBoard(req)
+		resp, err := svc.CreateBoard(req)
 
-	assert.NoError(t, err)
-	assert.Equal(t, board.ID, resp.Board.ID)
-	assert.Equal(t, board.Name, resp.Board.Name)
-	assert.Equal(t, board.UserID, resp.Board.UserID)
-	repo.AssertExpectations(t)
-}
+		assert.NoError(t, err)
+		assert.Equal(t, board.ID, resp.Board.ID)
+		assert.Equal(t, board.Name, resp.Board.Name)
+		assert.Equal(t, board.UserID, resp.Board.UserID)
+		repo.AssertExpectations(t)
+	})
 
-func TestCreateBoard_RepoFails(t *testing.T) {
-	repo := new(mockRepository)
-	svc := newService(repo)
+	t.Run("repo fails", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
 
-	req := &CreateBoardRequest{Name: "My Board", UserID: "user-1"}
+		req := &CreateBoardRequest{Name: "My Board", UserID: "user-1"}
 
-	repo.
-		On("CreateBoard", mock.Anything, req.Name, req.UserID).
-		Return(sqlc.Board{}, errors.New("db error"))
+		repo.
+			On("CreateBoard", mock.Anything, req.Name, req.UserID).
+			Return(sqlc.Board{}, errors.New("db error"))
 
-	resp, err := svc.CreateBoard(req)
+		resp, err := svc.CreateBoard(req)
 
-	assert.Error(t, err)
-	assert.Empty(t, resp.Board.ID)
-	assert.ErrorContains(t, err, "failed to create board")
-	repo.AssertExpectations(t)
+		assert.Error(t, err)
+		assert.Empty(t, resp.Board.ID)
+		assert.ErrorContains(t, err, "failed to create board")
+		repo.AssertExpectations(t)
+	})
 }
 
 // --- List ---
 
-func TestListBoards_Success(t *testing.T) {
-	repo := new(mockRepository)
-	svc := newService(repo)
+func TestListBoards(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
 
-	boards := []sqlc.Board{
-		{ID: "board-1", Name: "First", UserID: "user-1"},
-		{ID: "board-2", Name: "Second", UserID: "user-1"},
-	}
+		boards := []sqlc.Board{
+			{ID: "board-1", Name: "First", UserID: "user-1"},
+			{ID: "board-2", Name: "Second", UserID: "user-1"},
+		}
 
-	repo.
-		On("GetUserBoards", mock.Anything, "user-1").
-		Return(boards, nil)
+		repo.
+			On("GetUserBoards", mock.Anything, "user-1").
+			Return(boards, nil)
 
-	resp, err := svc.ListBoards("user-1")
+		resp, err := svc.ListBoards("user-1")
 
-	assert.NoError(t, err)
-	assert.Len(t, resp.Boards, 2)
-	assert.Equal(t, "board-1", resp.Boards[0].ID)
-	assert.Equal(t, "board-2", resp.Boards[1].ID)
-	repo.AssertExpectations(t)
+		assert.NoError(t, err)
+		assert.Len(t, resp.Boards, 2)
+		assert.Equal(t, "board-1", resp.Boards[0].ID)
+		assert.Equal(t, "board-2", resp.Boards[1].ID)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("empty list", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
+
+		repo.
+			On("GetUserBoards", mock.Anything, "user-1").
+			Return([]sqlc.Board{}, nil)
+
+		resp, err := svc.ListBoards("user-1")
+
+		assert.NoError(t, err)
+		assert.Empty(t, resp.Boards)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("repo fails", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
+
+		repo.
+			On("GetUserBoards", mock.Anything, "user-1").
+			Return([]sqlc.Board{}, errors.New("db error"))
+
+		resp, err := svc.ListBoards("user-1")
+
+		assert.Error(t, err)
+		assert.Empty(t, resp.Boards)
+		assert.ErrorContains(t, err, "failed to fetch boards")
+		repo.AssertExpectations(t)
+	})
 }
 
-func TestListBoards_Empty(t *testing.T) {
-	repo := new(mockRepository)
-	svc := newService(repo)
+func TestGetBoard(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
 
-	repo.
-		On("GetUserBoards", mock.Anything, "user-1").
-		Return([]sqlc.Board{}, nil)
+		board := sqlc.Board{ID: "board-1", Name: "My Board", UserID: "user-1"}
 
-	resp, err := svc.ListBoards("user-1")
+		repo.
+			On("GetUserBoardByID", mock.Anything, "board-1", "user-1").
+			Return(board, nil)
 
-	assert.NoError(t, err)
-	assert.Empty(t, resp.Boards)
-	repo.AssertExpectations(t)
-}
+		resp, err := svc.GetBoard("board-1", "user-1")
 
-func TestListBoards_RepoFails(t *testing.T) {
-	repo := new(mockRepository)
-	svc := newService(repo)
+		assert.NoError(t, err)
+		assert.Equal(t, board.ID, resp.Board.ID)
+		assert.Equal(t, board.Name, resp.Board.Name)
+		repo.AssertExpectations(t)
+	})
 
-	repo.
-		On("GetUserBoards", mock.Anything, "user-1").
-		Return([]sqlc.Board{}, errors.New("db error"))
+	t.Run("not found", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
 
-	resp, err := svc.ListBoards("user-1")
+		repo.
+			On("GetUserBoardByID", mock.Anything, "board-1", "user-2").
+			Return(sqlc.Board{}, errors.New("not found"))
 
-	assert.Error(t, err)
-	assert.Empty(t, resp.Boards)
-	assert.ErrorContains(t, err, "failed to fetch boards")
-	repo.AssertExpectations(t)
-}
+		resp, err := svc.GetBoard("board-1", "user-2")
 
-func TestGetBoard_Success(t *testing.T) {
-	repo := new(mockRepository)
-	svc := newService(repo)
-
-	board := sqlc.Board{ID: "board-1", Name: "My Board", UserID: "user-1"}
-
-	repo.
-		On("GetUserBoardByID", mock.Anything, "board-1", "user-1").
-		Return(board, nil)
-
-	resp, err := svc.GetBoard("board-1", "user-1")
-
-	assert.NoError(t, err)
-	assert.Equal(t, board.ID, resp.Board.ID)
-	assert.Equal(t, board.Name, resp.Board.Name)
-	repo.AssertExpectations(t)
-}
-
-func TestGetBoard_NotFound(t *testing.T) {
-	repo := new(mockRepository)
-	svc := newService(repo)
-
-	repo.
-		On("GetUserBoardByID", mock.Anything, "board-1", "user-2").
-		Return(sqlc.Board{}, errors.New("not found"))
-
-	resp, err := svc.GetBoard("board-1", "user-2")
-
-	assert.Error(t, err)
-	assert.Empty(t, resp.Board.ID)
-	assert.ErrorContains(t, err, "board not found")
-	repo.AssertExpectations(t)
+		assert.Error(t, err)
+		assert.Empty(t, resp.Board.ID)
+		assert.ErrorContains(t, err, "board not found")
+		repo.AssertExpectations(t)
+	})
 }
 
 // --- Update ---
 
-func TestUpdateBoard_Success(t *testing.T) {
-	repo := new(mockRepository)
-	svc := newService(repo)
+func TestUpdateBoard(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
 
-	req := &UpdateBoardRequest{Name: "Renamed", ID: "board-1", UserID: "user-1"}
-	board := sqlc.Board{ID: "board-1", Name: "Renamed", UserID: "user-1"}
+		req := &UpdateBoardRequest{Name: "Renamed", ID: "board-1", UserID: "user-1"}
+		board := sqlc.Board{ID: "board-1", Name: "Renamed", UserID: "user-1"}
 
-	repo.
-		On("UpdateUserBoardByID", mock.Anything, req.Name, req.ID, req.UserID).
-		Return(board, nil)
+		repo.
+			On("UpdateUserBoardByID", mock.Anything, req.Name, req.ID, req.UserID).
+			Return(board, nil)
 
-	resp, err := svc.UpdateBoard(req)
+		resp, err := svc.UpdateBoard(req)
 
-	assert.NoError(t, err)
-	assert.Equal(t, board.ID, resp.Board.ID)
-	assert.Equal(t, board.Name, resp.Board.Name)
-	assert.Equal(t, board.UserID, resp.Board.UserID)
-	repo.AssertExpectations(t)
-}
+		assert.NoError(t, err)
+		assert.Equal(t, board.ID, resp.Board.ID)
+		assert.Equal(t, board.Name, resp.Board.Name)
+		assert.Equal(t, board.UserID, resp.Board.UserID)
+		repo.AssertExpectations(t)
+	})
 
-func TestUpdateBoard_NotFound(t *testing.T) {
-	repo := new(mockRepository)
-	svc := newService(repo)
+	t.Run("not found", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
 
-	req := &UpdateBoardRequest{Name: "Renamed", ID: "board-1", UserID: "user-2"}
+		req := &UpdateBoardRequest{Name: "Renamed", ID: "board-1", UserID: "user-2"}
 
-	repo.
-		On("UpdateUserBoardByID", mock.Anything, req.Name, req.ID, req.UserID).
-		Return(sqlc.Board{}, errors.New("not found"))
+		repo.
+			On("UpdateUserBoardByID", mock.Anything, req.Name, req.ID, req.UserID).
+			Return(sqlc.Board{}, errors.New("not found"))
 
-	resp, err := svc.UpdateBoard(req)
+		resp, err := svc.UpdateBoard(req)
 
-	assert.Error(t, err)
-	assert.Empty(t, resp.Board.ID)
-	assert.ErrorContains(t, err, "board not found")
-	repo.AssertExpectations(t)
+		assert.Error(t, err)
+		assert.Empty(t, resp.Board.ID)
+		assert.ErrorContains(t, err, "board not found")
+		repo.AssertExpectations(t)
+	})
 }
 
 // --- Delete ---
 
-func TestDeleteBoard_Success(t *testing.T) {
-	repo := new(mockRepository)
-	svc := newService(repo)
+func TestDeleteBoard(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
 
-	repo.
-		On("DeleteUserBoardByID", mock.Anything, "board-1", "user-1").
-		Return(nil)
+		repo.
+			On("DeleteUserBoardByID", mock.Anything, "board-1", "user-1").
+			Return(nil)
 
-	err := svc.DeleteBoard("board-1", "user-1")
+		err := svc.DeleteBoard("board-1", "user-1")
 
-	assert.NoError(t, err)
-	repo.AssertExpectations(t)
+		assert.NoError(t, err)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
+
+		repo.
+			On("DeleteUserBoardByID", mock.Anything, "board-1", "user-2").
+			Return(errors.New("not found"))
+
+		err := svc.DeleteBoard("board-1", "user-2")
+
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, "board not found")
+		repo.AssertExpectations(t)
+	})
 }
 
-func TestDeleteBoard_NotFound(t *testing.T) {
-	repo := new(mockRepository)
-	svc := newService(repo)
+// --- IsOwner ---
 
-	repo.
-		On("DeleteUserBoardByID", mock.Anything, "board-1", "user-2").
-		Return(errors.New("not found"))
+func TestIsOwner(t *testing.T) {
+	t.Run("is owner", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
 
-	err := svc.DeleteBoard("board-1", "user-2")
+		repo.
+			On("GetUserBoardByID", mock.Anything, "board-1", "user-1").
+			Return(sqlc.Board{ID: "board-1", UserID: "user-1"}, nil)
 
-	assert.Error(t, err)
-	assert.ErrorContains(t, err, "board not found")
-	repo.AssertExpectations(t)
+		err := svc.IsOwner("board-1", "user-1")
+
+		assert.NoError(t, err)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("not owner", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
+
+		repo.
+			On("GetUserBoardByID", mock.Anything, "board-1", "user-2").
+			Return(sqlc.Board{}, errors.New("board not found"))
+
+		err := svc.IsOwner("board-1", "user-2")
+
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, "board not found")
+		repo.AssertExpectations(t)
+	})
 }

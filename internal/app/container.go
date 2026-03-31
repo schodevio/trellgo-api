@@ -36,7 +36,7 @@ func NewContainer(ctx context.Context, cfg *config.Config) *Container {
 	healthModule := health.New(authKey)
 	authModule := auth.New(queries, authKey)
 	boardsModule := boards.New(queries, authKey)
-	listsModule := lists.New(queries, authKey)
+	listsModule := lists.New(queries, authKey, boardsModule.Service)
 
 	return &Container{
 		DB:     pool,

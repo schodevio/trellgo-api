@@ -33,6 +33,7 @@ func (h *handler) CreateList(ctx fiber.Ctx) error {
 	if err := ctx.Bind().Body(&req); err != nil {
 		return apierrors.BadRequest("invalid request body")
 	}
+
 	if err := validator.Validate(&req); err != nil {
 		return err
 	}
@@ -42,7 +43,12 @@ func (h *handler) CreateList(ctx fiber.Ctx) error {
 		return apierrors.BadRequest("missing board id")
 	}
 
-	resp, err := h.service.CreateList(boardID, &req)
+	userID, ok := ctx.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return apierrors.Unauthorized("missing user identity")
+	}
+
+	resp, err := h.service.CreateList(boardID, userID, &req)
 	if err != nil {
 		return err
 	}
