@@ -30,5 +30,6 @@ func New(queries *sqlc.Queries, authKey paseto.V4SymmetricKey, boardsService boa
 func (m *Module) RegisterRoutes(router fiber.Router) {
 	group := router.Group("/boards/:board_id/lists", middleware.Authenticate(m.authKey))
 
-	group.Post("/", m.handler.CreateList)
+	group.Post("/", m.handler.Create)
+	group.Get("/", m.handler.List)
 }

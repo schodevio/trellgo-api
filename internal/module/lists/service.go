@@ -8,6 +8,7 @@ import (
 
 type Service interface {
 	CreateList(boardID, userID string, req *CreateListRequest) (SingleListResponse, error)
+	ListLists(boardID, userID string) (ListListsResponse, error)
 }
 
 type boardGuard interface {
@@ -43,4 +44,29 @@ func (s *service) CreateList(boardID, userID string, req *CreateListRequest) (Si
 			UpdatedAt: list.UpdatedAt.Time.String(),
 		},
 	}, nil
+}
+
+func (s *service) ListLists(boardID, userID string) (ListListsResponse, error) {
+	if err := s.boardGuard.IsOwner(boardID, userID); err != nil {
+		return ListListsResponse{}, err
+	}
+
+	lists, err := s.repo.GetBoardLists(context.Background(), boardID)
+	if err != nil {
+		return ListListsResponse{}, apierrors.Internal("failed to fetch lists")
+	}
+
+	items := make([]ListResponse, 0, len(lists))
+	for _, l := range lists {
+		items = append(items, ListResponse{
+			ID:        l.ID,
+			Name:      l.Name,
+			BoardID:   l.BoardID,
+			Position:  l.Position,
+			CreatedAt: l.CreatedAt.Time.String(),
+			UpdatedAt: l.UpdatedAt.Time.String(),
+		})
+	}
+
+	return ListListsResponse{Lists: items}, nil
 }

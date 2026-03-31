@@ -107,6 +107,13 @@ definitions:
     - name
     - position
     type: object
+  lists.ListListsResponse:
+    properties:
+      lists:
+        items:
+          $ref: '#/definitions/lists.ListResponse'
+        type: array
+    type: object
   lists.ListResponse:
     properties:
       board_id:
@@ -279,6 +286,30 @@ paths:
       tags:
       - boards
   /boards/{board_id}/lists:
+    get:
+      parameters:
+      - description: Board ID
+        in: path
+        name: board_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/lists.ListListsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List board lists
+      tags:
+      - lists
     post:
       consumes:
       - application/json
@@ -315,7 +346,7 @@ paths:
             $ref: '#/definitions/apierrors.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Create a list
+      summary: Create a board list
       tags:
       - lists
   /boards/{id}:

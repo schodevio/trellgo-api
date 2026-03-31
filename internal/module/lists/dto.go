@@ -17,3 +17,7 @@ type ListResponse struct {
 type SingleListResponse struct {
 	List ListResponse `json:"list"`
 }
+
+type ListListsResponse struct {
+	Lists []ListResponse `json:"lists"`
+}

@@ -34,3 +34,37 @@ func (q *Queries) CreateList(ctx context.Context, arg CreateListParams) (List, e
 	)
 	return i, err
 }
+
+const getBoardLists = `-- name: GetBoardLists :many
+SELECT id, name, board_id, position, created_at, updated_at
+FROM lists
+WHERE board_id = $1
+ORDER BY position ASC
+`
+
+func (q *Queries) GetBoardLists(ctx context.Context, boardID string) ([]List, error) {
+	rows, err := q.db.Query(ctx, getBoardLists, boardID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []List
+	for rows.Next() {
+		var i List
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.BoardID,
+			&i.Position,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

@@ -8,6 +8,7 @@ import (
 
 type Repository interface {
 	CreateList(ctx context.Context, name string, boardID string, position int32) (sqlc.List, error)
+	GetBoardLists(ctx context.Context, boardID string) ([]sqlc.List, error)
 }
 
 type repository struct {
@@ -24,4 +25,8 @@ func (r *repository) CreateList(ctx context.Context, name string, boardID string
 		BoardID:  boardID,
 		Position: position,
 	})
+}
+
+func (r *repository) GetBoardLists(ctx context.Context, boardID string) ([]sqlc.List, error) {
+	return r.queries.GetBoardLists(ctx, boardID)
 }

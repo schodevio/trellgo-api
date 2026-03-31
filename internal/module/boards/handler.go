@@ -53,7 +53,7 @@ func (h *handler) Create(ctx fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(resp)
 }
 
-// List godoc
+// Index godoc
 // @Summary      List boards
 // @Tags         boards
 // @Produce      json

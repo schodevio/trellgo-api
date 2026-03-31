@@ -243,6 +243,44 @@ const docTemplate = `{
             }
         },
         "/boards/{board_id}/lists": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json",
+                    "application/json"
+                ],
+                "tags": [
+                    "lists"
+                ],
+                "summary": "List board lists",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Board ID",
+                        "name": "board_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/lists.ListListsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apierrors.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -258,7 +296,7 @@ const docTemplate = `{
                 "tags": [
                     "lists"
                 ],
-                "summary": "Create a list",
+                "summary": "Create a board list",
                 "parameters": [
                     {
                         "type": "string",
@@ -617,6 +655,17 @@ const docTemplate = `{
                 "position": {
                     "type": "integer",
                     "minimum": 0
+                }
+            }
+        },
+        "lists.ListListsResponse": {
+            "type": "object",
+            "properties": {
+                "lists": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/lists.ListResponse"
+                    }
                 }
             }
         },
