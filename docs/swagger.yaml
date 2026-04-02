@@ -134,6 +134,19 @@ definitions:
       list:
         $ref: '#/definitions/lists.ListResponse'
     type: object
+  lists.UpdateListRequest:
+    properties:
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      position:
+        minimum: 0
+        type: integer
+    required:
+    - name
+    - position
+    type: object
 host: localhost:3000
 info:
   contact: {}
@@ -445,6 +458,75 @@ paths:
       summary: Update a board
       tags:
       - boards
+  /lists/{id}:
+    delete:
+      parameters:
+      - description: List ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a list
+      tags:
+      - lists
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: List ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: List data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/lists.UpdateListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/lists.SingleListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a list
+      tags:
+      - lists
 securityDefinitions:
   BearerAuth:
     description: 'Enter: Bearer <token>'
