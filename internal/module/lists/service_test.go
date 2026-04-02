@@ -16,14 +16,24 @@ type mockRepository struct {
 	mock.Mock
 }
 
-func (m *mockRepository) CreateList(ctx context.Context, name, boardID string, position int32) (sqlc.List, error) {
-	args := m.Called(ctx, name, boardID, position)
+func (m *mockRepository) CreateList(ctx context.Context, boardID, name string, position int32) (sqlc.List, error) {
+	args := m.Called(ctx, boardID, name, position)
 	return args.Get(0).(sqlc.List), args.Error(1)
 }
 
 func (m *mockRepository) GetBoardLists(ctx context.Context, boardID string) ([]sqlc.List, error) {
 	args := m.Called(ctx, boardID)
 	return args.Get(0).([]sqlc.List), args.Error(1)
+}
+
+func (m *mockRepository) GetListByID(ctx context.Context, id string) (sqlc.List, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(sqlc.List), args.Error(1)
+}
+
+func (m *mockRepository) UpdateListByID(ctx context.Context, id, name string, position int32) (sqlc.List, error) {
+	args := m.Called(ctx, id, name, position)
+	return args.Get(0).(sqlc.List), args.Error(1)
 }
 
 type mockBoardGuard struct {
@@ -51,7 +61,7 @@ func TestCreateList(t *testing.T) {
 			Return(nil)
 
 		repo.
-			On("CreateList", mock.Anything, req.Name, "board-1", req.Position).
+			On("CreateList", mock.Anything, "board-1", req.Name, req.Position).
 			Return(list, nil)
 
 		resp, err := svc.CreateList("board-1", "user-1", req)
@@ -95,7 +105,7 @@ func TestCreateList(t *testing.T) {
 			Return(nil)
 
 		repo.
-			On("CreateList", mock.Anything, req.Name, "board-1", req.Position).
+			On("CreateList", mock.Anything, "board-1", req.Name, req.Position).
 			Return(sqlc.List{}, errors.New("db error"))
 
 		resp, err := svc.CreateList("board-1", "user-1", req)

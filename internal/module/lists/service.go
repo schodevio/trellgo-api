@@ -9,6 +9,7 @@ import (
 type Service interface {
 	CreateList(boardID, userID string, req *CreateListRequest) (SingleListResponse, error)
 	ListLists(boardID, userID string) (ListListsResponse, error)
+	UpdateList(listID, userID string, req *UpdateListRequest) (SingleListResponse, error)
 }
 
 type boardGuard interface {
@@ -29,7 +30,7 @@ func (s *service) CreateList(boardID, userID string, req *CreateListRequest) (Si
 		return SingleListResponse{}, err
 	}
 
-	list, err := s.repo.CreateList(context.Background(), req.Name, boardID, req.Position)
+	list, err := s.repo.CreateList(context.Background(), boardID, req.Name, req.Position)
 	if err != nil {
 		return SingleListResponse{}, apierrors.Internal("failed to create list")
 	}
@@ -69,4 +70,31 @@ func (s *service) ListLists(boardID, userID string) (ListListsResponse, error) {
 	}
 
 	return ListListsResponse{Lists: items}, nil
+}
+
+func (s *service) UpdateList(id, userID string, req *UpdateListRequest) (SingleListResponse, error) {
+	list, err := s.repo.GetListByID(context.Background(), id)
+	if err != nil {
+		return SingleListResponse{}, apierrors.NotFound("list not found")
+	}
+
+	if err := s.boardGuard.IsOwner(list.BoardID, userID); err != nil {
+		return SingleListResponse{}, err
+	}
+
+	list, err = s.repo.UpdateListByID(context.Background(), id, req.Name, req.Position)
+	if err != nil {
+		return SingleListResponse{}, apierrors.Internal("failed to update list")
+	}
+
+	return SingleListResponse{
+		List: ListResponse{
+			ID:        list.ID,
+			Name:      list.Name,
+			BoardID:   list.BoardID,
+			Position:  list.Position,
+			CreatedAt: list.CreatedAt.Time.String(),
+			UpdatedAt: list.UpdatedAt.Time.String(),
+		},
+	}, nil
 }

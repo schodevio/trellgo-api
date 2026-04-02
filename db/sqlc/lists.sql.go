@@ -68,3 +68,50 @@ func (q *Queries) GetBoardLists(ctx context.Context, boardID string) ([]List, er
 	}
 	return items, nil
 }
+
+const getList = `-- name: GetList :one
+SELECT id, name, board_id, position, created_at, updated_at
+FROM lists
+WHERE id = $1
+`
+
+func (q *Queries) GetList(ctx context.Context, id string) (List, error) {
+	row := q.db.QueryRow(ctx, getList, id)
+	var i List
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.BoardID,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateList = `-- name: UpdateList :one
+UPDATE lists
+SET name = $1, position = $2, updated_at = now()
+WHERE id = $3
+RETURNING id, name, board_id, position, created_at, updated_at
+`
+
+type UpdateListParams struct {
+	Name     string `json:"name"`
+	Position int32  `json:"position"`
+	ID       string `json:"id"`
+}
+
+func (q *Queries) UpdateList(ctx context.Context, arg UpdateListParams) (List, error) {
+	row := q.db.QueryRow(ctx, updateList, arg.Name, arg.Position, arg.ID)
+	var i List
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.BoardID,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

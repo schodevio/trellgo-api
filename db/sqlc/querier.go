@@ -15,12 +15,14 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteUserBoardByID(ctx context.Context, arg DeleteUserBoardByIDParams) error
 	GetBoardLists(ctx context.Context, boardID string) ([]List, error)
+	GetList(ctx context.Context, id string) (List, error)
 	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error)
 	GetUserBoardByID(ctx context.Context, arg GetUserBoardByIDParams) (Board, error)
 	GetUserBoards(ctx context.Context, userID string) ([]Board, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id string) (User, error)
 	RevokeRefreshToken(ctx context.Context, id string) (RefreshToken, error)
+	UpdateList(ctx context.Context, arg UpdateListParams) (List, error)
 	UpdateUserBoardByID(ctx context.Context, arg UpdateUserBoardByIDParams) (Board, error)
 }
 

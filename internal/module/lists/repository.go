@@ -7,8 +7,10 @@ import (
 )
 
 type Repository interface {
-	CreateList(ctx context.Context, name string, boardID string, position int32) (sqlc.List, error)
+	CreateList(ctx context.Context, boardID, name string, position int32) (sqlc.List, error)
 	GetBoardLists(ctx context.Context, boardID string) ([]sqlc.List, error)
+	GetListByID(ctx context.Context, id string) (sqlc.List, error)
+	UpdateListByID(ctx context.Context, id, name string, position int32) (sqlc.List, error)
 }
 
 type repository struct {
@@ -19,7 +21,7 @@ func newRepository(queries *sqlc.Queries) Repository {
 	return &repository{queries: queries}
 }
 
-func (r *repository) CreateList(ctx context.Context, name string, boardID string, position int32) (sqlc.List, error) {
+func (r *repository) CreateList(ctx context.Context, boardID, name string, position int32) (sqlc.List, error) {
 	return r.queries.CreateList(ctx, sqlc.CreateListParams{
 		Name:     name,
 		BoardID:  boardID,
@@ -29,4 +31,16 @@ func (r *repository) CreateList(ctx context.Context, name string, boardID string
 
 func (r *repository) GetBoardLists(ctx context.Context, boardID string) ([]sqlc.List, error) {
 	return r.queries.GetBoardLists(ctx, boardID)
+}
+
+func (r *repository) GetListByID(ctx context.Context, id string) (sqlc.List, error) {
+	return r.queries.GetList(ctx, id)
+}
+
+func (r *repository) UpdateListByID(ctx context.Context, id, name string, position int32) (sqlc.List, error) {
+	return r.queries.UpdateList(ctx, sqlc.UpdateListParams{
+		ID:       id,
+		Name:     name,
+		Position: position,
+	})
 }

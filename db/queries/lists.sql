@@ -8,3 +8,14 @@ SELECT *
 FROM lists
 WHERE board_id = $1
 ORDER BY position ASC;
+
+-- name: GetList :one
+SELECT *
+FROM lists
+WHERE id = $1;
+
+-- name: UpdateList :one
+UPDATE lists
+SET name = $1, position = $2, updated_at = now()
+WHERE id = $3
+RETURNING *;
