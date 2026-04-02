@@ -16,8 +16,8 @@ type mockRepository struct {
 	mock.Mock
 }
 
-func (m *mockRepository) CreateBoard(ctx context.Context, name, userID string) (sqlc.Board, error) {
-	args := m.Called(ctx, name, userID)
+func (m *mockRepository) CreateBoard(ctx context.Context, userID, name string) (sqlc.Board, error) {
+	args := m.Called(ctx, userID, name)
 	return args.Get(0).(sqlc.Board), args.Error(1)
 }
 
@@ -26,18 +26,23 @@ func (m *mockRepository) GetUserBoards(ctx context.Context, userID string) ([]sq
 	return args.Get(0).([]sqlc.Board), args.Error(1)
 }
 
-func (m *mockRepository) GetUserBoardByID(ctx context.Context, id, userID string) (sqlc.Board, error) {
-	args := m.Called(ctx, id, userID)
+func (m *mockRepository) GetUserBoardByID(ctx context.Context, boardID, userID string) (sqlc.Board, error) {
+	args := m.Called(ctx, boardID, userID)
 	return args.Get(0).(sqlc.Board), args.Error(1)
 }
 
-func (m *mockRepository) UpdateUserBoardByID(ctx context.Context, name, id, userID string) (sqlc.Board, error) {
-	args := m.Called(ctx, name, id, userID)
+func (m *mockRepository) GetBoardByID(ctx context.Context, boardID string) (sqlc.Board, error) {
+	args := m.Called(ctx, boardID)
 	return args.Get(0).(sqlc.Board), args.Error(1)
 }
 
-func (m *mockRepository) DeleteUserBoardByID(ctx context.Context, id, userID string) error {
-	args := m.Called(ctx, id, userID)
+func (m *mockRepository) UpdateBoardByID(ctx context.Context, boardID, name string) (sqlc.Board, error) {
+	args := m.Called(ctx, boardID, name)
+	return args.Get(0).(sqlc.Board), args.Error(1)
+}
+
+func (m *mockRepository) DeleteBoardByID(ctx context.Context, boardID string) error {
+	args := m.Called(ctx, boardID)
 	return args.Error(0)
 }
 
@@ -48,14 +53,14 @@ func TestCreateBoard(t *testing.T) {
 		repo := new(mockRepository)
 		svc := newService(repo)
 
-		req := &CreateBoardRequest{Name: "My Board", UserID: "user-1"}
+		req := &CreateBoardRequest{Name: "My Board"}
 		board := sqlc.Board{ID: "board-1", Name: "My Board", UserID: "user-1"}
 
 		repo.
-			On("CreateBoard", mock.Anything, req.Name, req.UserID).
+			On("CreateBoard", mock.Anything, "user-1", req.Name).
 			Return(board, nil)
 
-		resp, err := svc.CreateBoard(req)
+		resp, err := svc.CreateBoard("user-1", req)
 
 		assert.NoError(t, err)
 		assert.Equal(t, board.ID, resp.Board.ID)
@@ -68,13 +73,13 @@ func TestCreateBoard(t *testing.T) {
 		repo := new(mockRepository)
 		svc := newService(repo)
 
-		req := &CreateBoardRequest{Name: "My Board", UserID: "user-1"}
+		req := &CreateBoardRequest{Name: "My Board"}
 
 		repo.
-			On("CreateBoard", mock.Anything, req.Name, req.UserID).
+			On("CreateBoard", mock.Anything, "user-1", req.Name).
 			Return(sqlc.Board{}, errors.New("db error"))
 
-		resp, err := svc.CreateBoard(req)
+		resp, err := svc.CreateBoard("user-1", req)
 
 		assert.Error(t, err)
 		assert.Empty(t, resp.Board.ID)
@@ -183,14 +188,18 @@ func TestUpdateBoard(t *testing.T) {
 		repo := new(mockRepository)
 		svc := newService(repo)
 
-		req := &UpdateBoardRequest{Name: "Renamed", ID: "board-1", UserID: "user-1"}
+		req := &UpdateBoardRequest{Name: "Renamed"}
 		board := sqlc.Board{ID: "board-1", Name: "Renamed", UserID: "user-1"}
 
 		repo.
-			On("UpdateUserBoardByID", mock.Anything, req.Name, req.ID, req.UserID).
+			On("GetUserBoardByID", mock.Anything, "board-1", "user-1").
 			Return(board, nil)
 
-		resp, err := svc.UpdateBoard(req)
+		repo.
+			On("UpdateBoardByID", mock.Anything, "board-1", req.Name).
+			Return(board, nil)
+
+		resp, err := svc.UpdateBoard("board-1", "user-1", req)
 
 		assert.NoError(t, err)
 		assert.Equal(t, board.ID, resp.Board.ID)
@@ -203,17 +212,40 @@ func TestUpdateBoard(t *testing.T) {
 		repo := new(mockRepository)
 		svc := newService(repo)
 
-		req := &UpdateBoardRequest{Name: "Renamed", ID: "board-1", UserID: "user-2"}
+		req := &UpdateBoardRequest{Name: "Renamed"}
 
 		repo.
-			On("UpdateUserBoardByID", mock.Anything, req.Name, req.ID, req.UserID).
+			On("GetUserBoardByID", mock.Anything, "board-1", "user-1").
 			Return(sqlc.Board{}, errors.New("not found"))
 
-		resp, err := svc.UpdateBoard(req)
+		resp, err := svc.UpdateBoard("board-1", "user-1", req)
 
 		assert.Error(t, err)
 		assert.Empty(t, resp.Board.ID)
 		assert.ErrorContains(t, err, "board not found")
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("update fails", func(t *testing.T) {
+		repo := new(mockRepository)
+		svc := newService(repo)
+
+		req := &UpdateBoardRequest{Name: "Renamed"}
+		board := sqlc.Board{ID: "board-1", Name: "My Board", UserID: "user-1"}
+
+		repo.
+			On("GetUserBoardByID", mock.Anything, "board-1", "user-1").
+			Return(board, nil)
+
+		repo.
+			On("UpdateBoardByID", mock.Anything, "board-1", req.Name).
+			Return(sqlc.Board{}, errors.New("db error"))
+
+		resp, err := svc.UpdateBoard("board-1", "user-1", req)
+
+		assert.Error(t, err)
+		assert.Empty(t, resp.Board.ID)
+		assert.ErrorContains(t, err, "failed to update board")
 		repo.AssertExpectations(t)
 	})
 }
@@ -225,8 +257,14 @@ func TestDeleteBoard(t *testing.T) {
 		repo := new(mockRepository)
 		svc := newService(repo)
 
+		board := sqlc.Board{ID: "board-1", Name: "My Board", UserID: "user-1"}
+
 		repo.
-			On("DeleteUserBoardByID", mock.Anything, "board-1", "user-1").
+			On("GetUserBoardByID", mock.Anything, "board-1", "user-1").
+			Return(board, nil)
+
+		repo.
+			On("DeleteBoardByID", mock.Anything, "board-1").
 			Return(nil)
 
 		err := svc.DeleteBoard("board-1", "user-1")
@@ -240,8 +278,8 @@ func TestDeleteBoard(t *testing.T) {
 		svc := newService(repo)
 
 		repo.
-			On("DeleteUserBoardByID", mock.Anything, "board-1", "user-2").
-			Return(errors.New("not found"))
+			On("GetUserBoardByID", mock.Anything, "board-1", "user-2").
+			Return(sqlc.Board{}, errors.New("not found"))
 
 		err := svc.DeleteBoard("board-1", "user-2")
 
@@ -249,37 +287,25 @@ func TestDeleteBoard(t *testing.T) {
 		assert.ErrorContains(t, err, "board not found")
 		repo.AssertExpectations(t)
 	})
-}
 
-// --- IsOwner ---
-
-func TestIsOwner(t *testing.T) {
-	t.Run("is owner", func(t *testing.T) {
+	t.Run("delete fails", func(t *testing.T) {
 		repo := new(mockRepository)
 		svc := newService(repo)
+
+		board := sqlc.Board{ID: "board-1", Name: "My Board", UserID: "user-1"}
 
 		repo.
 			On("GetUserBoardByID", mock.Anything, "board-1", "user-1").
-			Return(sqlc.Board{ID: "board-1", UserID: "user-1"}, nil)
-
-		err := svc.IsOwner("board-1", "user-1")
-
-		assert.NoError(t, err)
-		repo.AssertExpectations(t)
-	})
-
-	t.Run("not owner", func(t *testing.T) {
-		repo := new(mockRepository)
-		svc := newService(repo)
+			Return(board, nil)
 
 		repo.
-			On("GetUserBoardByID", mock.Anything, "board-1", "user-2").
-			Return(sqlc.Board{}, errors.New("board not found"))
+			On("DeleteBoardByID", mock.Anything, "board-1").
+			Return(errors.New("db error"))
 
-		err := svc.IsOwner("board-1", "user-2")
+		err := svc.DeleteBoard("board-1", "user-1")
 
 		assert.Error(t, err)
-		assert.ErrorContains(t, err, "board not found")
+		assert.ErrorContains(t, err, "failed to delete board")
 		repo.AssertExpectations(t)
 	})
 }

@@ -1,14 +1,11 @@
 package boards
 
 type CreateBoardRequest struct {
-	Name   string `json:"name" validate:"required,min=1,max=255"`
-	UserID string `json:"-"    validate:"required"`
+	Name string `json:"name" validate:"required,min=1,max=255"`
 }
 
 type UpdateBoardRequest struct {
-	Name   string `json:"name"    validate:"required,min=1,max=255"`
-	ID     string `json:"-"       validate:"required"`
-	UserID string `json:"-"       validate:"required"`
+	Name string `json:"name"    validate:"required,min=1,max=255"`
 }
 
 type BoardResponse struct {

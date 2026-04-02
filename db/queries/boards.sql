@@ -14,12 +14,17 @@ SELECT *
 FROM boards
 WHERE id = $1 AND user_id = $2;
 
--- name: UpdateUserBoardByID :one
+-- name: GetBoardByID :one
+SELECT *
+FROM boards
+WHERE id = $1;
+
+-- name: UpdateBoardByID :one
 UPDATE boards
 SET name = $1, updated_at = now()
-WHERE id = $2 AND user_id = $3
+WHERE id = $2
 RETURNING *;
 
--- name: DeleteUserBoardByID :exec
+-- name: DeleteBoardByID :exec
 DELETE FROM boards
-WHERE id = $1 AND user_id = $2;
+WHERE id = $1;

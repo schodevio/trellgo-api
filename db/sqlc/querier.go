@@ -13,8 +13,9 @@ type Querier interface {
 	CreateList(ctx context.Context, arg CreateListParams) (List, error)
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (RefreshToken, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteBoardByID(ctx context.Context, id string) error
 	DeleteList(ctx context.Context, id string) error
-	DeleteUserBoardByID(ctx context.Context, arg DeleteUserBoardByIDParams) error
+	GetBoardByID(ctx context.Context, id string) (Board, error)
 	GetBoardLists(ctx context.Context, boardID string) ([]List, error)
 	GetList(ctx context.Context, id string) (List, error)
 	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error)
@@ -23,8 +24,8 @@ type Querier interface {
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id string) (User, error)
 	RevokeRefreshToken(ctx context.Context, id string) (RefreshToken, error)
+	UpdateBoardByID(ctx context.Context, arg UpdateBoardByIDParams) (Board, error)
 	UpdateList(ctx context.Context, arg UpdateListParams) (List, error)
-	UpdateUserBoardByID(ctx context.Context, arg UpdateUserBoardByIDParams) (Board, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -33,19 +33,33 @@ func (q *Queries) CreateBoard(ctx context.Context, arg CreateBoardParams) (Board
 	return i, err
 }
 
-const deleteUserBoardByID = `-- name: DeleteUserBoardByID :exec
+const deleteBoardByID = `-- name: DeleteBoardByID :exec
 DELETE FROM boards
-WHERE id = $1 AND user_id = $2
+WHERE id = $1
 `
 
-type DeleteUserBoardByIDParams struct {
-	ID     string `json:"id"`
-	UserID string `json:"user_id"`
+func (q *Queries) DeleteBoardByID(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteBoardByID, id)
+	return err
 }
 
-func (q *Queries) DeleteUserBoardByID(ctx context.Context, arg DeleteUserBoardByIDParams) error {
-	_, err := q.db.Exec(ctx, deleteUserBoardByID, arg.ID, arg.UserID)
-	return err
+const getBoardByID = `-- name: GetBoardByID :one
+SELECT id, name, user_id, created_at, updated_at
+FROM boards
+WHERE id = $1
+`
+
+func (q *Queries) GetBoardByID(ctx context.Context, id string) (Board, error) {
+	row := q.db.QueryRow(ctx, getBoardByID, id)
+	var i Board
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getUserBoardByID = `-- name: GetUserBoardByID :one
@@ -105,21 +119,20 @@ func (q *Queries) GetUserBoards(ctx context.Context, userID string) ([]Board, er
 	return items, nil
 }
 
-const updateUserBoardByID = `-- name: UpdateUserBoardByID :one
+const updateBoardByID = `-- name: UpdateBoardByID :one
 UPDATE boards
 SET name = $1, updated_at = now()
-WHERE id = $2 AND user_id = $3
+WHERE id = $2
 RETURNING id, name, user_id, created_at, updated_at
 `
 
-type UpdateUserBoardByIDParams struct {
-	Name   string `json:"name"`
-	ID     string `json:"id"`
-	UserID string `json:"user_id"`
+type UpdateBoardByIDParams struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
 }
 
-func (q *Queries) UpdateUserBoardByID(ctx context.Context, arg UpdateUserBoardByIDParams) (Board, error) {
-	row := q.db.QueryRow(ctx, updateUserBoardByID, arg.Name, arg.ID, arg.UserID)
+func (q *Queries) UpdateBoardByID(ctx context.Context, arg UpdateBoardByIDParams) (Board, error) {
+	row := q.db.QueryRow(ctx, updateBoardByID, arg.Name, arg.ID)
 	var i Board
 	err := row.Scan(
 		&i.ID,

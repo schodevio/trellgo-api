@@ -33,19 +33,16 @@ func (h *handler) Create(ctx fiber.Ctx) error {
 		return apierrors.BadRequest("invalid request body")
 	}
 
+	if err := validator.Validate(&req); err != nil {
+		return err
+	}
+
 	userID, ok := ctx.Locals("user_id").(string)
 	if !ok || userID == "" {
 		return apierrors.Unauthorized("missing user identity")
 	}
 
-	// Assign current user ID to the requests
-	req.UserID = userID
-
-	if err := validator.Validate(&req); err != nil {
-		return err
-	}
-
-	resp, err := h.service.CreateBoard(&req)
+	resp, err := h.service.CreateBoard(userID, &req)
 	if err != nil {
 		return err
 	}
@@ -122,19 +119,18 @@ func (h *handler) Update(ctx fiber.Ctx) error {
 		return apierrors.BadRequest("invalid request body")
 	}
 
+	if err := validator.Validate(&req); err != nil {
+		return err
+	}
+
 	userID, ok := ctx.Locals("user_id").(string)
 	if !ok || userID == "" {
 		return apierrors.Unauthorized("missing user identity")
 	}
 
-	req.ID = ctx.Params("id")
-	req.UserID = userID
+	id := ctx.Params("id")
 
-	if err := validator.Validate(&req); err != nil {
-		return err
-	}
-
-	resp, err := h.service.UpdateBoard(&req)
+	resp, err := h.service.UpdateBoard(id, userID, &req)
 	if err != nil {
 		return err
 	}

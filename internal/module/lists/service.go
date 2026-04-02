@@ -13,21 +13,21 @@ type Service interface {
 	DeleteList(listID, userID string) error
 }
 
-type boardGuard interface {
-	IsOwner(boardID, userID string) error
+type boardChecker interface {
+	IsOwner(boardID, userID string) (bool, error)
 }
 
 type service struct {
-	repo       Repository
-	boardGuard boardGuard
+	repo         Repository
+	boardChecker boardChecker
 }
 
-func newService(repo Repository, boardGuard boardGuard) Service {
-	return &service{repo: repo, boardGuard: boardGuard}
+func newService(repo Repository, boardChecker boardChecker) Service {
+	return &service{repo: repo, boardChecker: boardChecker}
 }
 
 func (s *service) CreateList(boardID, userID string, req *CreateListRequest) (SingleListResponse, error) {
-	if err := s.boardGuard.IsOwner(boardID, userID); err != nil {
+	if _, err := s.boardChecker.IsOwner(boardID, userID); err != nil {
 		return SingleListResponse{}, err
 	}
 
@@ -49,7 +49,7 @@ func (s *service) CreateList(boardID, userID string, req *CreateListRequest) (Si
 }
 
 func (s *service) ListLists(boardID, userID string) (ListListsResponse, error) {
-	if err := s.boardGuard.IsOwner(boardID, userID); err != nil {
+	if _, err := s.boardChecker.IsOwner(boardID, userID); err != nil {
 		return ListListsResponse{}, err
 	}
 
@@ -79,7 +79,7 @@ func (s *service) UpdateList(id, userID string, req *UpdateListRequest) (SingleL
 		return SingleListResponse{}, apierrors.NotFound("list not found")
 	}
 
-	if err := s.boardGuard.IsOwner(list.BoardID, userID); err != nil {
+	if _, err := s.boardChecker.IsOwner(list.BoardID, userID); err != nil {
 		return SingleListResponse{}, err
 	}
 
@@ -106,7 +106,7 @@ func (s *service) DeleteList(listID, userID string) error {
 		return apierrors.NotFound("list not found")
 	}
 
-	if err := s.boardGuard.IsOwner(list.BoardID, userID); err != nil {
+	if _, err := s.boardChecker.IsOwner(list.BoardID, userID); err != nil {
 		return err
 	}
 

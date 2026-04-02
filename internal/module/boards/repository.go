@@ -7,11 +7,12 @@ import (
 )
 
 type Repository interface {
-	CreateBoard(ctx context.Context, name, userID string) (sqlc.Board, error)
+	CreateBoard(ctx context.Context, userID, name string) (sqlc.Board, error)
 	GetUserBoards(ctx context.Context, userID string) ([]sqlc.Board, error)
-	GetUserBoardByID(ctx context.Context, id, userID string) (sqlc.Board, error)
-	UpdateUserBoardByID(ctx context.Context, name, id, userID string) (sqlc.Board, error)
-	DeleteUserBoardByID(ctx context.Context, id, userID string) error
+	GetUserBoardByID(ctx context.Context, boardID, userID string) (sqlc.Board, error)
+	GetBoardByID(ctx context.Context, boardID string) (sqlc.Board, error)
+	UpdateBoardByID(ctx context.Context, boardID, name string) (sqlc.Board, error)
+	DeleteBoardByID(ctx context.Context, boardID string) error
 }
 
 type repository struct {
@@ -22,7 +23,7 @@ func newRepository(queries *sqlc.Queries) Repository {
 	return &repository{queries: queries}
 }
 
-func (r *repository) CreateBoard(ctx context.Context, name, userID string) (sqlc.Board, error) {
+func (r *repository) CreateBoard(ctx context.Context, userID, name string) (sqlc.Board, error) {
 	return r.queries.CreateBoard(ctx, sqlc.CreateBoardParams{
 		Name:   name,
 		UserID: userID,
@@ -33,24 +34,24 @@ func (r *repository) GetUserBoards(ctx context.Context, userID string) ([]sqlc.B
 	return r.queries.GetUserBoards(ctx, userID)
 }
 
-func (r *repository) GetUserBoardByID(ctx context.Context, id, userID string) (sqlc.Board, error) {
+func (r *repository) GetUserBoardByID(ctx context.Context, boardID, userID string) (sqlc.Board, error) {
 	return r.queries.GetUserBoardByID(ctx, sqlc.GetUserBoardByIDParams{
-		ID:     id,
+		ID:     boardID,
 		UserID: userID,
 	})
 }
 
-func (r *repository) UpdateUserBoardByID(ctx context.Context, name, id, userID string) (sqlc.Board, error) {
-	return r.queries.UpdateUserBoardByID(ctx, sqlc.UpdateUserBoardByIDParams{
-		Name:   name,
-		ID:     id,
-		UserID: userID,
+func (r *repository) GetBoardByID(ctx context.Context, boardID string) (sqlc.Board, error) {
+	return r.queries.GetBoardByID(ctx, boardID)
+}
+
+func (r *repository) UpdateBoardByID(ctx context.Context, boardID, name string) (sqlc.Board, error) {
+	return r.queries.UpdateBoardByID(ctx, sqlc.UpdateBoardByIDParams{
+		ID:   boardID,
+		Name: name,
 	})
 }
 
-func (r *repository) DeleteUserBoardByID(ctx context.Context, id, userID string) error {
-	return r.queries.DeleteUserBoardByID(ctx, sqlc.DeleteUserBoardByIDParams{
-		ID:     id,
-		UserID: userID,
-	})
+func (r *repository) DeleteBoardByID(ctx context.Context, boardID string) error {
+	return r.queries.DeleteBoardByID(ctx, boardID)
 }

@@ -7,12 +7,12 @@ import (
 )
 
 type Service interface {
-	CreateBoard(req *CreateBoardRequest) (SingleBoardResponse, error)
+	CreateBoard(userID string, req *CreateBoardRequest) (SingleBoardResponse, error)
 	ListBoards(userID string) (ListBoardsResponse, error)
-	GetBoard(id, userID string) (SingleBoardResponse, error)
-	UpdateBoard(req *UpdateBoardRequest) (SingleBoardResponse, error)
-	DeleteBoard(id, userID string) error
-	IsOwner(id, userID string) error
+	GetBoard(boardID, userID string) (SingleBoardResponse, error)
+	UpdateBoard(boardID, userID string, req *UpdateBoardRequest) (SingleBoardResponse, error)
+	DeleteBoard(boardID, userID string) error
+	IsOwner(boardID, userID string) (bool, error)
 }
 
 type service struct {
@@ -23,8 +23,8 @@ func newService(repo Repository) Service {
 	return &service{repo: repo}
 }
 
-func (s *service) CreateBoard(req *CreateBoardRequest) (SingleBoardResponse, error) {
-	board, err := s.repo.CreateBoard(context.Background(), req.Name, req.UserID)
+func (s *service) CreateBoard(userID string, req *CreateBoardRequest) (SingleBoardResponse, error) {
+	board, err := s.repo.CreateBoard(context.Background(), userID, req.Name)
 	if err != nil {
 		return SingleBoardResponse{}, apierrors.Internal("failed to create board")
 	}
@@ -60,8 +60,8 @@ func (s *service) ListBoards(userID string) (ListBoardsResponse, error) {
 	return ListBoardsResponse{Boards: items}, nil
 }
 
-func (s *service) GetBoard(id, userID string) (SingleBoardResponse, error) {
-	board, err := s.repo.GetUserBoardByID(context.Background(), id, userID)
+func (s *service) GetBoard(boardID, userID string) (SingleBoardResponse, error) {
+	board, err := s.repo.GetUserBoardByID(context.Background(), boardID, userID)
 	if err != nil {
 		return SingleBoardResponse{}, apierrors.NotFound("board not found")
 	}
@@ -77,10 +77,15 @@ func (s *service) GetBoard(id, userID string) (SingleBoardResponse, error) {
 	}, nil
 }
 
-func (s *service) UpdateBoard(req *UpdateBoardRequest) (SingleBoardResponse, error) {
-	board, err := s.repo.UpdateUserBoardByID(context.Background(), req.Name, req.ID, req.UserID)
+func (s *service) UpdateBoard(boardID, userID string, req *UpdateBoardRequest) (SingleBoardResponse, error) {
+	board, err := s.repo.GetUserBoardByID(context.Background(), boardID, userID)
 	if err != nil {
 		return SingleBoardResponse{}, apierrors.NotFound("board not found")
+	}
+
+	board, err = s.repo.UpdateBoardByID(context.Background(), boardID, req.Name)
+	if err != nil {
+		return SingleBoardResponse{}, apierrors.Internal("failed to update board")
 	}
 
 	return SingleBoardResponse{
@@ -94,19 +99,23 @@ func (s *service) UpdateBoard(req *UpdateBoardRequest) (SingleBoardResponse, err
 	}, nil
 }
 
-func (s *service) DeleteBoard(id, userID string) error {
-	if err := s.repo.DeleteUserBoardByID(context.Background(), id, userID); err != nil {
+func (s *service) DeleteBoard(boardID, userID string) error {
+	if _, err := s.repo.GetUserBoardByID(context.Background(), boardID, userID); err != nil {
 		return apierrors.NotFound("board not found")
+	}
+
+	if err := s.repo.DeleteBoardByID(context.Background(), boardID); err != nil {
+		return apierrors.Internal("failed to delete board")
 	}
 
 	return nil
 }
 
-func (s *service) IsOwner(id, userID string) error {
-	_, err := s.repo.GetUserBoardByID(context.Background(), id, userID)
+func (s *service) IsOwner(boardID, userID string) (bool, error) {
+	_, err := s.repo.GetUserBoardByID(context.Background(), boardID, userID)
 	if err != nil {
-		return apierrors.NotFound("board not found")
+		return false, apierrors.NotFound("board not found")
 	}
 
-	return nil
+	return true, nil
 }
