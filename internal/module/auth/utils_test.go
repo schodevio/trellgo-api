@@ -11,42 +11,47 @@ import (
 
 // --- hashToken ---
 
-func TestHashToken_Deterministic(t *testing.T) {
-	a := hashToken("some-token")
-	b := hashToken("some-token")
+func TestHashToken(t *testing.T) {
+	t.Run("deterministic", func(t *testing.T) {
+		a := hashToken("some-token")
+		b := hashToken("some-token")
 
-	assert.Equal(t, a, b)
-}
+		assert.Equal(t, a, b)
+	})
 
-func TestHashToken_DifferentInputs(t *testing.T) {
-	assert.NotEqual(t, hashToken("token-a"), hashToken("token-b"))
-}
+	t.Run("differentTokens", func(t *testing.T) {
+		assert.NotEqual(t, hashToken("token-a"), hashToken("token-b"))
+	})
 
-func TestHashToken_NotEmpty(t *testing.T) {
-	assert.NotEmpty(t, hashToken("x"))
+	t.Run("not empty", func(t *testing.T) {
+		assert.NotEmpty(t, hashToken("some-token"))
+	})
 }
 
 // --- checkPassword ---
 
-func TestCheckPassword_Correct(t *testing.T) {
-	hash, err := hashPassword("secret123")
+func TestCheckPassword(t *testing.T) {
+	t.Run("correct password", func(t *testing.T) {
+		hash, err := hashPassword("secret123")
 
-	require.NoError(t, err)
-	assert.True(t, checkPassword("secret123", hash))
-}
+		require.NoError(t, err)
+		assert.True(t, checkPassword("secret123", hash))
 
-func TestCheckPassword_Wrong(t *testing.T) {
-	hash, err := hashPassword("secret123")
+	})
 
-	require.NoError(t, err)
-	assert.False(t, checkPassword("wrongpassword", hash))
-}
+	t.Run("wrong password", func(t *testing.T) {
+		hash, err := hashPassword("secret123")
 
-func TestCheckPassword_EmptyPassword(t *testing.T) {
-	hash, err := hashPassword("secret123")
+		require.NoError(t, err)
+		assert.False(t, checkPassword("wrongpassword", hash))
+	})
 
-	require.NoError(t, err)
-	assert.False(t, checkPassword("", hash))
+	t.Run("empty password", func(t *testing.T) {
+		hash, err := hashPassword("secret123")
+
+		require.NoError(t, err)
+		assert.False(t, checkPassword("", hash))
+	})
 }
 
 // --- parseRefreshToken ---
@@ -64,53 +69,56 @@ func makeToken(key paseto.V4SymmetricKey, typ string, expiration time.Time) stri
 	return t.V4Encrypt(key, nil)
 }
 
-func TestParseRefreshToken_Valid(t *testing.T) {
-	key := paseto.NewV4SymmetricKey()
-	token := makeToken(key, "refresh", time.Now().Add(time.Hour))
+func TestParseREfreshToken(t *testing.T) {
+	t.Run("valid token", func(t *testing.T) {
+		key := paseto.NewV4SymmetricKey()
+		token := makeToken(key, "refresh", time.Now().Add(time.Hour))
 
-	subject, err := parseRefreshToken(token, key)
+		subject, err := parseRefreshToken(token, key)
 
-	assert.NoError(t, err)
-	assert.Equal(t, "user-42", subject)
-}
+		assert.NoError(t, err)
+		assert.Equal(t, "user-42", subject)
+	})
 
-func TestParseRefreshToken_AccessTokenRejected(t *testing.T) {
-	key := paseto.NewV4SymmetricKey()
-	token := makeToken(key, "access", time.Now().Add(time.Hour))
+	t.Run("access token rejected", func(t *testing.T) {
+		key := paseto.NewV4SymmetricKey()
+		token := makeToken(key, "access", time.Now().Add(time.Hour))
 
-	subject, err := parseRefreshToken(token, key)
+		subject, err := parseRefreshToken(token, key)
 
-	assert.Error(t, err)
-	assert.Empty(t, subject)
-	assert.ErrorContains(t, err, "invalid token type")
-}
+		assert.Error(t, err)
+		assert.Empty(t, subject)
+		assert.ErrorContains(t, err, "invalid token type")
+	})
 
-func TestParseRefreshToken_Expired(t *testing.T) {
-	key := paseto.NewV4SymmetricKey()
-	token := makeToken(key, "refresh", time.Now().Add(-time.Minute))
+	t.Run("expired token", func(t *testing.T) {
+		key := paseto.NewV4SymmetricKey()
+		token := makeToken(key, "refresh", time.Now().Add(-time.Minute))
 
-	subject, err := parseRefreshToken(token, key)
+		subject, err := parseRefreshToken(token, key)
 
-	assert.Error(t, err)
-	assert.Empty(t, subject)
-}
+		assert.Error(t, err)
+		assert.Empty(t, subject)
+		assert.ErrorContains(t, err, "this token has expired")
+	})
 
-func TestParseRefreshToken_WrongKey(t *testing.T) {
-	key := paseto.NewV4SymmetricKey()
-	wrongKey := paseto.NewV4SymmetricKey()
-	token := makeToken(key, "refresh", time.Now().Add(time.Hour))
+	t.Run("wrong key", func(t *testing.T) {
+		key := paseto.NewV4SymmetricKey()
+		wrongKey := paseto.NewV4SymmetricKey()
+		token := makeToken(key, "refresh", time.Now().Add(time.Hour))
 
-	subject, err := parseRefreshToken(token, wrongKey)
+		subject, err := parseRefreshToken(token, wrongKey)
 
-	assert.Error(t, err)
-	assert.Empty(t, subject)
-}
+		assert.Error(t, err)
+		assert.Empty(t, subject)
+	})
 
-func TestParseRefreshToken_InvalidString(t *testing.T) {
-	key := paseto.NewV4SymmetricKey()
+	t.Run("invalid token string", func(t *testing.T) {
+		key := paseto.NewV4SymmetricKey()
 
-	subject, err := parseRefreshToken("not-a-token", key)
+		subject, err := parseRefreshToken("not-a-token", key)
 
-	assert.Error(t, err)
-	assert.Empty(t, subject)
+		assert.Error(t, err)
+		assert.Empty(t, subject)
+	})
 }
