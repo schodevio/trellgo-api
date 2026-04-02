@@ -19,3 +19,7 @@ UPDATE lists
 SET name = $1, position = $2, updated_at = now()
 WHERE id = $3
 RETURNING *;
+
+-- name: DeleteList :exec
+DELETE FROM lists
+WHERE id = $1;

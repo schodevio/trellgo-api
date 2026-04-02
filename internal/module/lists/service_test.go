@@ -36,6 +36,11 @@ func (m *mockRepository) UpdateListByID(ctx context.Context, id, name string, po
 	return args.Get(0).(sqlc.List), args.Error(1)
 }
 
+func (m *mockRepository) DeleteListByID(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
 type mockBoardGuard struct {
 	mock.Mock
 }
@@ -201,5 +206,205 @@ func TestListLists(t *testing.T) {
 		assert.Empty(t, resp.Lists)
 		assert.ErrorContains(t, err, "failed to fetch lists")
 		repo.AssertExpectations(t)
+	})
+}
+
+func TestUpdateList(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardGuard := new(mockBoardGuard)
+		svc := newService(repo, boardGuard)
+
+		req := &UpdateListRequest{Name: "Updated", Position: 2}
+		existing := sqlc.List{ID: "list-1", Name: "Old", BoardID: "board-1", Position: 1}
+		updated := sqlc.List{ID: "list-1", Name: "Updated", BoardID: "board-1", Position: 2}
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(existing, nil)
+
+		boardGuard.
+			On("IsOwner", "board-1", "user-1").
+			Return(nil)
+
+		repo.
+			On("UpdateListByID", mock.Anything, "list-1", req.Name, req.Position).
+			Return(updated, nil)
+
+		resp, err := svc.UpdateList("list-1", "user-1", req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, updated.ID, resp.List.ID)
+		assert.Equal(t, updated.Name, resp.List.Name)
+		assert.Equal(t, updated.Position, resp.List.Position)
+		repo.AssertExpectations(t)
+		boardGuard.AssertExpectations(t)
+	})
+
+	t.Run("list not found", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardGuard := new(mockBoardGuard)
+		svc := newService(repo, boardGuard)
+
+		req := &UpdateListRequest{Name: "Updated", Position: 2}
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(sqlc.List{}, errors.New("not found"))
+
+		resp, err := svc.UpdateList("list-1", "user-1", req)
+
+		assert.Error(t, err)
+		assert.Empty(t, resp.List.ID)
+		assert.ErrorContains(t, err, "list not found")
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("not owner", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardGuard := new(mockBoardGuard)
+		svc := newService(repo, boardGuard)
+
+		req := &UpdateListRequest{Name: "Updated", Position: 2}
+		existing := sqlc.List{ID: "list-1", Name: "Old", BoardID: "board-1", Position: 1}
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(existing, nil)
+
+		boardGuard.
+			On("IsOwner", "board-1", "user-1").
+			Return(errors.New("board not found"))
+
+		resp, err := svc.UpdateList("list-1", "user-1", req)
+
+		assert.Error(t, err)
+		assert.Empty(t, resp.List.ID)
+		assert.ErrorContains(t, err, "board not found")
+		repo.AssertExpectations(t)
+		boardGuard.AssertExpectations(t)
+	})
+
+	t.Run("repo fails", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardGuard := new(mockBoardGuard)
+		svc := newService(repo, boardGuard)
+
+		req := &UpdateListRequest{Name: "Updated", Position: 2}
+		existing := sqlc.List{ID: "list-1", Name: "Old", BoardID: "board-1", Position: 1}
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(existing, nil)
+
+		boardGuard.
+			On("IsOwner", "board-1", "user-1").
+			Return(nil)
+
+		repo.
+			On("UpdateListByID", mock.Anything, "list-1", req.Name, req.Position).
+			Return(sqlc.List{}, errors.New("db error"))
+
+		resp, err := svc.UpdateList("list-1", "user-1", req)
+
+		assert.Error(t, err)
+		assert.Empty(t, resp.List.ID)
+		assert.ErrorContains(t, err, "failed to update list")
+		repo.AssertExpectations(t)
+		boardGuard.AssertExpectations(t)
+	})
+}
+
+func TestDeleteList(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardGuard := new(mockBoardGuard)
+		svc := newService(repo, boardGuard)
+
+		existing := sqlc.List{ID: "list-1", BoardID: "board-1"}
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(existing, nil)
+
+		boardGuard.
+			On("IsOwner", "board-1", "user-1").
+			Return(nil)
+
+		repo.
+			On("DeleteListByID", mock.Anything, "list-1").
+			Return(nil)
+
+		err := svc.DeleteList("list-1", "user-1")
+
+		assert.NoError(t, err)
+		repo.AssertExpectations(t)
+		boardGuard.AssertExpectations(t)
+	})
+
+	t.Run("list not found", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardGuard := new(mockBoardGuard)
+		svc := newService(repo, boardGuard)
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(sqlc.List{}, errors.New("not found"))
+
+		err := svc.DeleteList("list-1", "user-1")
+
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, "list not found")
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("not owner", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardGuard := new(mockBoardGuard)
+		svc := newService(repo, boardGuard)
+
+		existing := sqlc.List{ID: "list-1", BoardID: "board-1"}
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(existing, nil)
+
+		boardGuard.
+			On("IsOwner", "board-1", "user-1").
+			Return(errors.New("board not found"))
+
+		err := svc.DeleteList("list-1", "user-1")
+
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, "board not found")
+		repo.AssertExpectations(t)
+		boardGuard.AssertExpectations(t)
+	})
+
+	t.Run("repo fails", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardGuard := new(mockBoardGuard)
+		svc := newService(repo, boardGuard)
+
+		existing := sqlc.List{ID: "list-1", BoardID: "board-1"}
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(existing, nil)
+
+		boardGuard.
+			On("IsOwner", "board-1", "user-1").
+			Return(nil)
+
+		repo.
+			On("DeleteListByID", mock.Anything, "list-1").
+			Return(errors.New("db error"))
+
+		err := svc.DeleteList("list-1", "user-1")
+
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, "failed to delete list")
+		repo.AssertExpectations(t)
+		boardGuard.AssertExpectations(t)
 	})
 }

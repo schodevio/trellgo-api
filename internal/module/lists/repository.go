@@ -11,6 +11,7 @@ type Repository interface {
 	GetBoardLists(ctx context.Context, boardID string) ([]sqlc.List, error)
 	GetListByID(ctx context.Context, id string) (sqlc.List, error)
 	UpdateListByID(ctx context.Context, id, name string, position int32) (sqlc.List, error)
+	DeleteListByID(ctx context.Context, id string) error
 }
 
 type repository struct {
@@ -43,4 +44,8 @@ func (r *repository) UpdateListByID(ctx context.Context, id, name string, positi
 		Name:     name,
 		Position: position,
 	})
+}
+
+func (r *repository) DeleteListByID(ctx context.Context, id string) error {
+	return r.queries.DeleteList(ctx, id)
 }

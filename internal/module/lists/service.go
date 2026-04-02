@@ -10,6 +10,7 @@ type Service interface {
 	CreateList(boardID, userID string, req *CreateListRequest) (SingleListResponse, error)
 	ListLists(boardID, userID string) (ListListsResponse, error)
 	UpdateList(listID, userID string, req *UpdateListRequest) (SingleListResponse, error)
+	DeleteList(listID, userID string) error
 }
 
 type boardGuard interface {
@@ -97,4 +98,21 @@ func (s *service) UpdateList(id, userID string, req *UpdateListRequest) (SingleL
 			UpdatedAt: list.UpdatedAt.Time.String(),
 		},
 	}, nil
+}
+
+func (s *service) DeleteList(listID, userID string) error {
+	list, err := s.repo.GetListByID(context.Background(), listID)
+	if err != nil {
+		return apierrors.NotFound("list not found")
+	}
+
+	if err := s.boardGuard.IsOwner(list.BoardID, userID); err != nil {
+		return err
+	}
+
+	if err := s.repo.DeleteListByID(context.Background(), listID); err != nil {
+		return apierrors.Internal("failed to delete list")
+	}
+
+	return nil
 }

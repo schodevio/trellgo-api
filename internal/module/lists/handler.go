@@ -118,3 +118,28 @@ func (h *handler) Update(ctx fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(resp)
 }
+
+// Delete godoc
+// @Summary      Delete a list
+// @Tags         lists
+// @Produce      json
+// @Param        id   path      string  true  "List ID"
+// @Success      204
+// @Failure      401  {object}  apierrors.ErrorResponse
+// @Failure      404  {object}  apierrors.ErrorResponse
+// @Security     BearerAuth
+// @Router       /lists/{id} [delete]
+func (h *handler) Delete(ctx fiber.Ctx) error {
+	userID, ok := ctx.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return apierrors.Unauthorized("missing user identity")
+	}
+
+	id := ctx.Params("id")
+
+	if err := h.service.DeleteList(id, userID); err != nil {
+		return err
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
