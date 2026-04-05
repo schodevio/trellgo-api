@@ -26,6 +26,11 @@ func (m *mockRepository) GetBoardLists(ctx context.Context, boardID string) ([]s
 	return args.Get(0).([]sqlc.List), args.Error(1)
 }
 
+func (m *mockRepository) GetUserListByID(ctx context.Context, listID, userID string) (sqlc.List, error) {
+	args := m.Called(ctx, listID, userID)
+	return args.Get(0).(sqlc.List), args.Error(1)
+}
+
 func (m *mockRepository) GetListByID(ctx context.Context, id string) (sqlc.List, error) {
 	args := m.Called(ctx, id)
 	return args.Get(0).(sqlc.List), args.Error(1)
@@ -406,5 +411,57 @@ func TestDeleteList(t *testing.T) {
 		assert.ErrorContains(t, err, "failed to delete list")
 		repo.AssertExpectations(t)
 		boardChecker.AssertExpectations(t)
+	})
+}
+
+func TestIsOwner(t *testing.T) {
+	t.Run("is owner", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardChecker := new(mockBoardChecker)
+		svc := newService(repo, boardChecker)
+
+		repo.
+			On("GetUserListByID", mock.Anything, "list-1", "user-1").
+			Return(sqlc.List{ID: "list-1"}, nil)
+
+		isOwner, err := svc.IsOwner("list-1", "user-1")
+
+		assert.NoError(t, err)
+		assert.True(t, isOwner)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("not owner", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardChecker := new(mockBoardChecker)
+		svc := newService(repo, boardChecker)
+
+		repo.
+			On("GetUserListByID", mock.Anything, "list-1", "user-1").
+			Return(sqlc.List{}, errors.New("not found"))
+
+		isOwner, err := svc.IsOwner("list-1", "user-1")
+
+		assert.Error(t, err)
+		assert.False(t, isOwner)
+		assert.ErrorContains(t, err, "list not found")
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("repo fails", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardChecker := new(mockBoardChecker)
+		svc := newService(repo, boardChecker)
+
+		repo.
+			On("GetUserListByID", mock.Anything, "list-1", "user-1").
+			Return(sqlc.List{}, errors.New("db error"))
+
+		isOwner, err := svc.IsOwner("list-1", "user-1")
+
+		assert.Error(t, err)
+		assert.False(t, isOwner)
+		assert.ErrorContains(t, err, "list not found")
+		repo.AssertExpectations(t)
 	})
 }

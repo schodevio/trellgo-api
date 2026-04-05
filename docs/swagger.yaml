@@ -94,6 +94,60 @@ definitions:
     required:
     - name
     type: object
+  cards.CardResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      list_id:
+        type: string
+      position:
+        type: integer
+      status:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  cards.CreateCardRequest:
+    properties:
+      description:
+        maxLength: 1000
+        type: string
+      position:
+        minimum: 0
+        type: integer
+      status:
+        enum:
+        - todo
+        - in_progress
+        - done
+        type: string
+      title:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - position
+    - status
+    - title
+    type: object
+  cards.ListCardsResponse:
+    properties:
+      cards:
+        items:
+          $ref: '#/definitions/cards.CardResponse'
+        type: array
+    type: object
+  cards.SingleCardResponse:
+    properties:
+      card:
+        $ref: '#/definitions/cards.CardResponse'
+    type: object
   lists.CreateListRequest:
     properties:
       name:
@@ -527,6 +581,70 @@ paths:
       summary: Update a list
       tags:
       - lists
+  /lists/{list_id}/cards:
+    get:
+      parameters:
+      - description: List ID
+        in: path
+        name: list_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/cards.ListCardsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List list cards
+      tags:
+      - cards
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: List ID
+        in: path
+        name: list_id
+        required: true
+        type: string
+      - description: Card data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/cards.CreateCardRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/cards.SingleCardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a list card
+      tags:
+      - cards
 securityDefinitions:
   BearerAuth:
     description: 'Enter: Bearer <token>'

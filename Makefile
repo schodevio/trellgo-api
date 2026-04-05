@@ -29,7 +29,7 @@ migrate-status:
 
 migrate-create:
 	@read -p "Migration name: " name; \
-	goose -dir $(MIGRATIONS_DIR) create $$name sql
+	goose -dir $(MIGRATIONS_DIR) -s create $$name sql
 
 sqlc:
 	sqlc generate

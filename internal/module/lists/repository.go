@@ -9,6 +9,7 @@ import (
 type Repository interface {
 	CreateList(ctx context.Context, boardID, name string, position int32) (sqlc.List, error)
 	GetBoardLists(ctx context.Context, boardID string) ([]sqlc.List, error)
+	GetUserListByID(ctx context.Context, listID, userID string) (sqlc.List, error)
 	GetListByID(ctx context.Context, listID string) (sqlc.List, error)
 	UpdateListByID(ctx context.Context, listID, name string, position int32) (sqlc.List, error)
 	DeleteListByID(ctx context.Context, listID string) error
@@ -36,6 +37,13 @@ func (r *repository) GetBoardLists(ctx context.Context, boardID string) ([]sqlc.
 
 func (r *repository) GetListByID(ctx context.Context, listID string) (sqlc.List, error) {
 	return r.queries.GetList(ctx, listID)
+}
+
+func (r *repository) GetUserListByID(ctx context.Context, listID, userID string) (sqlc.List, error) {
+	return r.queries.GetUserListByID(ctx, sqlc.GetUserListByIDParams{
+		ID:     listID,
+		UserID: userID,
+	})
 }
 
 func (r *repository) UpdateListByID(ctx context.Context, listID, name string, position int32) (sqlc.List, error) {

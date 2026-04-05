@@ -11,6 +11,7 @@ type Service interface {
 	ListLists(boardID, userID string) (ListListsResponse, error)
 	UpdateList(listID, userID string, req *UpdateListRequest) (SingleListResponse, error)
 	DeleteList(listID, userID string) error
+	IsOwner(listID, userID string) (bool, error)
 }
 
 type boardChecker interface {
@@ -115,4 +116,13 @@ func (s *service) DeleteList(listID, userID string) error {
 	}
 
 	return nil
+}
+
+func (s *service) IsOwner(listID, userID string) (bool, error) {
+	_, err := s.repo.GetUserListByID(context.Background(), listID, userID)
+	if err != nil {
+		return false, apierrors.NotFound("list not found")
+	}
+
+	return true, nil
 }

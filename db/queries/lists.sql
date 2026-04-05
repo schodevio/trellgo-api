@@ -9,6 +9,12 @@ FROM lists
 WHERE board_id = $1
 ORDER BY position ASC;
 
+-- name: GetUserListByID :one
+SELECT lists.*
+FROM lists
+INNER JOIN boards ON lists.board_id = boards.id
+WHERE lists.id = $1 AND boards.user_id = $2;
+
 -- name: GetList :one
 SELECT *
 FROM lists

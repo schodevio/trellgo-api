@@ -10,6 +10,7 @@ import (
 
 type Querier interface {
 	CreateBoard(ctx context.Context, arg CreateBoardParams) (Board, error)
+	CreateCard(ctx context.Context, arg CreateCardParams) (Card, error)
 	CreateList(ctx context.Context, arg CreateListParams) (List, error)
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (RefreshToken, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -18,11 +19,13 @@ type Querier interface {
 	GetBoardByID(ctx context.Context, id string) (Board, error)
 	GetBoardLists(ctx context.Context, boardID string) ([]List, error)
 	GetList(ctx context.Context, id string) (List, error)
+	GetListCards(ctx context.Context, listID string) ([]Card, error)
 	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error)
 	GetUserBoardByID(ctx context.Context, arg GetUserBoardByIDParams) (Board, error)
 	GetUserBoards(ctx context.Context, userID string) ([]Board, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id string) (User, error)
+	GetUserListByID(ctx context.Context, arg GetUserListByIDParams) (List, error)
 	RevokeRefreshToken(ctx context.Context, id string) (RefreshToken, error)
 	UpdateBoardByID(ctx context.Context, arg UpdateBoardByIDParams) (Board, error)
 	UpdateList(ctx context.Context, arg UpdateListParams) (List, error)

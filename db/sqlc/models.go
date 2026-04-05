@@ -16,6 +16,17 @@ type Board struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Card struct {
+	ID          string             `json:"id"`
+	ListID      string             `json:"list_id"`
+	Position    int32              `json:"position"`
+	Title       string             `json:"title"`
+	Description pgtype.Text        `json:"description"`
+	Status      string             `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
 type List struct {
 	ID        string             `json:"id"`
 	Name      string             `json:"name"`

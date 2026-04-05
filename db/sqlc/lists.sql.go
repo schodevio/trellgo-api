@@ -99,6 +99,32 @@ func (q *Queries) GetList(ctx context.Context, id string) (List, error) {
 	return i, err
 }
 
+const getUserListByID = `-- name: GetUserListByID :one
+SELECT lists.id, lists.name, lists.board_id, lists.position, lists.created_at, lists.updated_at
+FROM lists
+INNER JOIN boards ON lists.board_id = boards.id
+WHERE lists.id = $1 AND boards.user_id = $2
+`
+
+type GetUserListByIDParams struct {
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+}
+
+func (q *Queries) GetUserListByID(ctx context.Context, arg GetUserListByIDParams) (List, error) {
+	row := q.db.QueryRow(ctx, getUserListByID, arg.ID, arg.UserID)
+	var i List
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.BoardID,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateList = `-- name: UpdateList :one
 UPDATE lists
 SET name = $1, position = $2, updated_at = now()
