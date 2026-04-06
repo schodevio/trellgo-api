@@ -47,6 +47,28 @@ func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (Card, e
 	return i, err
 }
 
+const getCardByID = `-- name: GetCardByID :one
+SELECT id, list_id, position, title, description, status, created_at, updated_at
+FROM cards
+WHERE id = $1
+`
+
+func (q *Queries) GetCardByID(ctx context.Context, id string) (Card, error) {
+	row := q.db.QueryRow(ctx, getCardByID, id)
+	var i Card
+	err := row.Scan(
+		&i.ID,
+		&i.ListID,
+		&i.Position,
+		&i.Title,
+		&i.Description,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getListCards = `-- name: GetListCards :many
 SELECT id, list_id, position, title, description, status, created_at, updated_at
 FROM cards
@@ -81,4 +103,41 @@ func (q *Queries) GetListCards(ctx context.Context, listID string) ([]Card, erro
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateCardByID = `-- name: UpdateCardByID :one
+UPDATE cards
+SET title = $1, description = $2, status = $3, position = $4, updated_at = now()
+WHERE id = $5
+RETURNING id, list_id, position, title, description, status, created_at, updated_at
+`
+
+type UpdateCardByIDParams struct {
+	Title       string      `json:"title"`
+	Description pgtype.Text `json:"description"`
+	Status      string      `json:"status"`
+	Position    int32       `json:"position"`
+	ID          string      `json:"id"`
+}
+
+func (q *Queries) UpdateCardByID(ctx context.Context, arg UpdateCardByIDParams) (Card, error) {
+	row := q.db.QueryRow(ctx, updateCardByID,
+		arg.Title,
+		arg.Description,
+		arg.Status,
+		arg.Position,
+		arg.ID,
+	)
+	var i Card
+	err := row.Scan(
+		&i.ID,
+		&i.ListID,
+		&i.Position,
+		&i.Title,
+		&i.Description,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

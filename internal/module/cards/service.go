@@ -9,6 +9,7 @@ import (
 type Service interface {
 	CreateCard(listID, userID string, req *CreateCardRequest) (SingleCardResponse, error)
 	ListCards(listID, userID string) (ListCardsResponse, error)
+	UpdateCard(cardID, userID string, req *UpdateCardRequest) (SingleCardResponse, error)
 }
 
 type listChecker interface {
@@ -73,4 +74,33 @@ func (s *service) ListCards(listID, userID string) (ListCardsResponse, error) {
 	}
 
 	return resp, nil
+}
+
+func (s *service) UpdateCard(cardID, userID string, req *UpdateCardRequest) (SingleCardResponse, error) {
+	card, err := s.repo.GetCardByID(context.Background(), cardID)
+	if err != nil {
+		return SingleCardResponse{}, apierrors.NotFound("card not found")
+	}
+
+	if _, err := s.listChecker.IsOwner(card.ListID, userID); err != nil {
+		return SingleCardResponse{}, err
+	}
+
+	updatedCard, err := s.repo.UpdateCardByID(context.Background(), cardID, req.Title, req.Description, req.Status, req.Position)
+	if err != nil {
+		return SingleCardResponse{}, apierrors.Internal("failed to update card")
+	}
+
+	return SingleCardResponse{
+		Card: CardResponse{
+			ID:          updatedCard.ID,
+			ListID:      updatedCard.ListID,
+			Title:       updatedCard.Title,
+			Description: updatedCard.Description.String,
+			Status:      updatedCard.Status,
+			Position:    updatedCard.Position,
+			CreatedAt:   updatedCard.CreatedAt.Time.String(),
+			UpdatedAt:   updatedCard.UpdatedAt.Time.String(),
+		},
+	}, nil
 }

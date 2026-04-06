@@ -18,6 +18,7 @@ type Querier interface {
 	DeleteList(ctx context.Context, id string) error
 	GetBoardByID(ctx context.Context, id string) (Board, error)
 	GetBoardLists(ctx context.Context, boardID string) ([]List, error)
+	GetCardByID(ctx context.Context, id string) (Card, error)
 	GetList(ctx context.Context, id string) (List, error)
 	GetListCards(ctx context.Context, listID string) ([]Card, error)
 	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error)
@@ -28,6 +29,7 @@ type Querier interface {
 	GetUserListByID(ctx context.Context, arg GetUserListByIDParams) (List, error)
 	RevokeRefreshToken(ctx context.Context, id string) (RefreshToken, error)
 	UpdateBoardByID(ctx context.Context, arg UpdateBoardByIDParams) (Board, error)
+	UpdateCardByID(ctx context.Context, arg UpdateCardByIDParams) (Card, error)
 	UpdateList(ctx context.Context, arg UpdateListParams) (List, error)
 }
 

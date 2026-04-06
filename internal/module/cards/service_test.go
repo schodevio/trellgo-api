@@ -26,6 +26,16 @@ func (m *mockRepository) GetListCards(ctx context.Context, listID string) ([]sql
 	return args.Get(0).([]sqlc.Card), args.Error(1)
 }
 
+func (m *mockRepository) GetCardByID(ctx context.Context, cardID string) (sqlc.Card, error) {
+	args := m.Called(ctx, cardID)
+	return args.Get(0).(sqlc.Card), args.Error(1)
+}
+
+func (m *mockRepository) UpdateCardByID(ctx context.Context, cardID, title, description, status string, position int32) (sqlc.Card, error) {
+	args := m.Called(ctx, cardID, title, description, status, position)
+	return args.Get(0).(sqlc.Card), args.Error(1)
+}
+
 type mockListChecker struct {
 	mock.Mock
 }
@@ -197,6 +207,157 @@ func TestListCards(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Equal(t, ListCardsResponse{}, resp)
+		repo.AssertExpectations(t)
+	})
+}
+
+func TestUpdateCard(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		repo := new(mockRepository)
+		listChecker := new(mockListChecker)
+		svc := newService(repo, listChecker)
+
+		card := sqlc.Card{
+			ID:          "card-1",
+			ListID:      "list-1",
+			Title:       "To Do",
+			Description: pgtype.Text{String: "Task description", Valid: true},
+			Status:      "open",
+			Position:    1,
+		}
+
+		req := &UpdateCardRequest{
+			Title:       "In Progress",
+			Description: "Updated task description",
+			Status:      "in_progress",
+			Position:    2,
+		}
+
+		listChecker.
+			On("IsOwner", "list-1", "user-1").
+			Return(true, nil)
+
+		repo.
+			On("GetCardByID", mock.Anything, "card-1").
+			Return(card, nil)
+
+		repo.
+			On("UpdateCardByID", mock.Anything, "card-1", req.Title, req.Description, req.Status, req.Position).
+			Return(sqlc.Card{
+				ID:          "card-1",
+				ListID:      "list-1",
+				Title:       req.Title,
+				Description: pgtype.Text{String: req.Description, Valid: true},
+				Status:      req.Status,
+				Position:    req.Position,
+			}, nil)
+
+		resp, err := svc.UpdateCard("card-1", "user-1", req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, req.Title, resp.Card.Title)
+		assert.Equal(t, req.Description, resp.Card.Description)
+		assert.Equal(t, req.Status, resp.Card.Status)
+		assert.Equal(t, req.Position, resp.Card.Position)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("card not found", func(t *testing.T) {
+		repo := new(mockRepository)
+		listChecker := new(mockListChecker)
+		svc := newService(repo, listChecker)
+
+		req := &UpdateCardRequest{
+			Title:       "In Progress",
+			Description: "Updated task description",
+			Status:      "in_progress",
+			Position:    2,
+		}
+
+		repo.
+			On("GetCardByID", mock.Anything, "card-1").
+			Return(sqlc.Card{}, assert.AnError)
+
+		resp, err := svc.UpdateCard("card-1", "user-1", req)
+
+		assert.Error(t, err)
+		assert.Equal(t, SingleCardResponse{}, resp)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("not owner", func(t *testing.T) {
+		repo := new(mockRepository)
+		listChecker := new(mockListChecker)
+		svc := newService(repo, listChecker)
+
+		card := sqlc.Card{
+			ID:          "card-1",
+			ListID:      "list-1",
+			Title:       "To Do",
+			Description: pgtype.Text{String: "Task description", Valid: true},
+			Status:      "open",
+			Position:    1,
+		}
+
+		req := &UpdateCardRequest{
+			Title:       "In Progress",
+			Description: "Updated task description",
+			Status:      "in_progress",
+			Position:    2,
+		}
+
+		repo.
+			On("GetCardByID", mock.Anything, "card-1").
+			Return(card, nil)
+
+		listChecker.
+			On("IsOwner", "list-1", "user-1").
+			Return(false, assert.AnError)
+
+		resp, err := svc.UpdateCard("card-1", "user-1", req)
+
+		assert.Error(t, err)
+		assert.Equal(t, SingleCardResponse{}, resp)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("repo error", func(t *testing.T) {
+		repo := new(mockRepository)
+		listChecker := new(mockListChecker)
+		svc := newService(repo, listChecker)
+
+		card := sqlc.Card{
+			ID:          "card-1",
+			ListID:      "list-1",
+			Title:       "To Do",
+			Description: pgtype.Text{String: "Task description", Valid: true},
+			Status:      "open",
+			Position:    1,
+		}
+
+		req := &UpdateCardRequest{
+			Title:       "In Progress",
+			Description: "Updated task description",
+			Status:      "in_progress",
+			Position:    2,
+		}
+
+		repo.
+			On("GetCardByID", mock.Anything, "card-1").
+			Return(card, nil)
+
+		listChecker.
+			On("IsOwner", "list-1", "user-1").
+			Return(true, nil)
+
+		repo.
+			On("UpdateCardByID", mock.Anything, "card-1", req.Title, req.Description, req.Status, req.Position).
+			Return(sqlc.Card{}, assert.AnError)
+
+		resp, err := svc.UpdateCard("card-1", "user-1", req)
+
+		assert.Error(t, err)
+		assert.Equal(t, SingleCardResponse{}, resp)
 		repo.AssertExpectations(t)
 	})
 }
