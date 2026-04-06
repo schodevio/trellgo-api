@@ -75,7 +75,9 @@ internal/
   app/            # Server bootstrap, router, middleware, DI container
   module/         # Feature modules (each owns handler/service/repository)
     auth/         # Sign up, sign in, sign out, token refresh
-    boards/       # Boards CRUD
+    boards/       # Boards CRUD (scoped to a user)
+    lists/        # Lists CRUD (scoped to a board)
+    cards/        # Cards CRUD (scoped to a list)
     health/       # Health check
   platform/       # Shared infrastructure
     apierrors/    # Typed API errors
@@ -220,6 +222,116 @@ Returns `404` if the board does not belong to the authenticated user.
 <summary><code>DELETE /api/v1/boards/:id</code></summary>
 
 Response `204`. Returns `404` if the board does not belong to the authenticated user.
+
+</details>
+
+### Lists
+
+All lists endpoints require a Bearer token:
+```
+Authorization: Bearer <access_token>
+```
+
+<details>
+<summary><code>POST /api/v1/boards/:board_id/lists</code></summary>
+
+Request:
+```json
+{ "name": "To Do", "position": 0 }
+```
+Response `201`:
+```json
+{ "list": { "id": "...", "name": "To Do", "board_id": "...", "position": 0, "created_at": "...", "updated_at": "..." } }
+```
+
+</details>
+
+<details>
+<summary><code>GET /api/v1/boards/:board_id/lists</code></summary>
+
+Response `200`:
+```json
+{ "lists": [ { "id": "...", "name": "To Do", "board_id": "...", "position": 0, "created_at": "...", "updated_at": "..." } ] }
+```
+Returns `404` if the board does not belong to the authenticated user.
+
+</details>
+
+<details>
+<summary><code>PATCH /api/v1/lists/:id</code></summary>
+
+Request:
+```json
+{ "name": "In Progress", "position": 1 }
+```
+Response `200`:
+```json
+{ "list": { "id": "...", "name": "In Progress", "board_id": "...", "position": 1, "created_at": "...", "updated_at": "..." } }
+```
+Returns `404` if the list does not belong to the authenticated user.
+
+</details>
+
+<details>
+<summary><code>DELETE /api/v1/lists/:id</code></summary>
+
+Response `204`. Returns `404` if the list does not belong to the authenticated user.
+
+</details>
+
+### Cards
+
+All cards endpoints require a Bearer token:
+```
+Authorization: Bearer <access_token>
+```
+
+<details>
+<summary><code>POST /api/v1/lists/:list_id/cards</code></summary>
+
+Request:
+```json
+{ "title": "My Card", "description": "Optional description", "status": "todo", "position": 0 }
+```
+`status` must be one of: `todo`, `in_progress`, `done`.
+
+Response `201`:
+```json
+{ "card": { "id": "...", "list_id": "...", "title": "My Card", "description": "Optional description", "status": "todo", "position": 0, "created_at": "...", "updated_at": "..." } }
+```
+
+</details>
+
+<details>
+<summary><code>GET /api/v1/lists/:list_id/cards</code></summary>
+
+Response `200`:
+```json
+{ "cards": [ { "id": "...", "list_id": "...", "title": "My Card", "description": "...", "status": "todo", "position": 0, "created_at": "...", "updated_at": "..." } ] }
+```
+Returns `404` if the list does not belong to the authenticated user.
+
+</details>
+
+<details>
+<summary><code>PATCH /api/v1/cards/:id</code></summary>
+
+Request:
+```json
+{ "title": "Updated Card", "description": "Updated description", "status": "in_progress", "position": 1 }
+```
+Response `200`:
+```json
+{ "card": { "id": "...", "list_id": "...", "title": "Updated Card", "description": "Updated description", "status": "in_progress", "position": 1, "created_at": "...", "updated_at": "..." } }
+```
+Returns `404` if the card does not belong to the authenticated user.
+
+</details>
+
+<details>
+<summary><code>DELETE /api/v1/cards/:id</code></summary>
+
+Response `204`. Returns `404` if the card does not belong to the authenticated user.
 
 </details>
 

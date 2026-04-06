@@ -35,13 +35,13 @@ func (q *Queries) CreateList(ctx context.Context, arg CreateListParams) (List, e
 	return i, err
 }
 
-const deleteList = `-- name: DeleteList :exec
+const deleteListByID = `-- name: DeleteListByID :exec
 DELETE FROM lists
 WHERE id = $1
 `
 
-func (q *Queries) DeleteList(ctx context.Context, id string) error {
-	_, err := q.db.Exec(ctx, deleteList, id)
+func (q *Queries) DeleteListByID(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteListByID, id)
 	return err
 }
 
@@ -79,14 +79,14 @@ func (q *Queries) GetBoardLists(ctx context.Context, boardID string) ([]List, er
 	return items, nil
 }
 
-const getList = `-- name: GetList :one
+const getListByID = `-- name: GetListByID :one
 SELECT id, name, board_id, position, created_at, updated_at
 FROM lists
 WHERE id = $1
 `
 
-func (q *Queries) GetList(ctx context.Context, id string) (List, error) {
-	row := q.db.QueryRow(ctx, getList, id)
+func (q *Queries) GetListByID(ctx context.Context, id string) (List, error) {
+	row := q.db.QueryRow(ctx, getListByID, id)
 	var i List
 	err := row.Scan(
 		&i.ID,
@@ -125,21 +125,21 @@ func (q *Queries) GetUserListByID(ctx context.Context, arg GetUserListByIDParams
 	return i, err
 }
 
-const updateList = `-- name: UpdateList :one
+const updateListByID = `-- name: UpdateListByID :one
 UPDATE lists
 SET name = $1, position = $2, updated_at = now()
 WHERE id = $3
 RETURNING id, name, board_id, position, created_at, updated_at
 `
 
-type UpdateListParams struct {
+type UpdateListByIDParams struct {
 	Name     string `json:"name"`
 	Position int32  `json:"position"`
 	ID       string `json:"id"`
 }
 
-func (q *Queries) UpdateList(ctx context.Context, arg UpdateListParams) (List, error) {
-	row := q.db.QueryRow(ctx, updateList, arg.Name, arg.Position, arg.ID)
+func (q *Queries) UpdateListByID(ctx context.Context, arg UpdateListByIDParams) (List, error) {
+	row := q.db.QueryRow(ctx, updateListByID, arg.Name, arg.Position, arg.ID)
 	var i List
 	err := row.Scan(
 		&i.ID,

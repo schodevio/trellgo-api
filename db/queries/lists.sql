@@ -15,17 +15,17 @@ FROM lists
 INNER JOIN boards ON lists.board_id = boards.id
 WHERE lists.id = $1 AND boards.user_id = $2;
 
--- name: GetList :one
+-- name: GetListByID :one
 SELECT *
 FROM lists
 WHERE id = $1;
 
--- name: UpdateList :one
+-- name: UpdateListByID :one
 UPDATE lists
 SET name = $1, position = $2, updated_at = now()
 WHERE id = $3
 RETURNING *;
 
--- name: DeleteList :exec
+-- name: DeleteListByID :exec
 DELETE FROM lists
 WHERE id = $1;

@@ -148,6 +148,29 @@ definitions:
       card:
         $ref: '#/definitions/cards.CardResponse'
     type: object
+  cards.UpdateCardRequest:
+    properties:
+      description:
+        maxLength: 1000
+        type: string
+      position:
+        minimum: 0
+        type: integer
+      status:
+        enum:
+        - todo
+        - in_progress
+        - done
+        type: string
+      title:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - position
+    - status
+    - title
+    type: object
   lists.CreateListRequest:
     properties:
       name:
@@ -512,6 +535,71 @@ paths:
       summary: Update a board
       tags:
       - boards
+  /cards/{id}:
+    delete:
+      parameters:
+      - description: Card ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a card
+      tags:
+      - cards
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Card ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Card data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/cards.UpdateCardRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/cards.SingleCardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a card
+      tags:
+      - cards
   /lists/{id}:
     delete:
       parameters:
@@ -603,7 +691,7 @@ paths:
             $ref: '#/definitions/apierrors.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: List list cards
+      summary: List cards of a list
       tags:
       - cards
     post:
@@ -642,7 +730,7 @@ paths:
             $ref: '#/definitions/apierrors.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Create a list card
+      summary: Create a card in a list
       tags:
       - cards
 securityDefinitions:

@@ -36,7 +36,7 @@ func (r *repository) GetBoardLists(ctx context.Context, boardID string) ([]sqlc.
 }
 
 func (r *repository) GetListByID(ctx context.Context, listID string) (sqlc.List, error) {
-	return r.queries.GetList(ctx, listID)
+	return r.queries.GetListByID(ctx, listID)
 }
 
 func (r *repository) GetUserListByID(ctx context.Context, listID, userID string) (sqlc.List, error) {
@@ -47,7 +47,7 @@ func (r *repository) GetUserListByID(ctx context.Context, listID, userID string)
 }
 
 func (r *repository) UpdateListByID(ctx context.Context, listID, name string, position int32) (sqlc.List, error) {
-	return r.queries.UpdateList(ctx, sqlc.UpdateListParams{
+	return r.queries.UpdateListByID(ctx, sqlc.UpdateListByIDParams{
 		ID:       listID,
 		Name:     name,
 		Position: position,
@@ -55,5 +55,5 @@ func (r *repository) UpdateListByID(ctx context.Context, listID, name string, po
 }
 
 func (r *repository) DeleteListByID(ctx context.Context, listID string) error {
-	return r.queries.DeleteList(ctx, listID)
+	return r.queries.DeleteListByID(ctx, listID)
 }
