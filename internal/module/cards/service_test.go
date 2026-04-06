@@ -36,6 +36,11 @@ func (m *mockRepository) UpdateCardByID(ctx context.Context, cardID, title, desc
 	return args.Get(0).(sqlc.Card), args.Error(1)
 }
 
+func (m *mockRepository) DeleteCardByID(ctx context.Context, cardID string) error {
+	args := m.Called(ctx, cardID)
+	return args.Error(0)
+}
+
 type mockListChecker struct {
 	mock.Mock
 }
@@ -358,6 +363,115 @@ func TestUpdateCard(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Equal(t, SingleCardResponse{}, resp)
+		repo.AssertExpectations(t)
+	})
+}
+
+func TestDeleteCard(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		repo := new(mockRepository)
+		listChecker := new(mockListChecker)
+		svc := newService(repo, listChecker)
+
+		card := sqlc.Card{
+			ID:          "card-1",
+			ListID:      "list-1",
+			Title:       "To Do",
+			Description: pgtype.Text{String: "Task description", Valid: true},
+			Status:      "open",
+			Position:    1,
+		}
+
+		repo.
+			On("GetCardByID", mock.Anything, "card-1").
+			Return(card, nil)
+
+		listChecker.
+			On("IsOwner", "list-1", "user-1").
+			Return(true, nil)
+
+		repo.
+			On("DeleteCardByID", mock.Anything, "card-1").
+			Return(nil)
+
+		err := svc.DeleteCard("card-1", "user-1")
+
+		assert.NoError(t, err)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("card not found", func(t *testing.T) {
+		repo := new(mockRepository)
+		listChecker := new(mockListChecker)
+		svc := newService(repo, listChecker)
+
+		repo.
+			On("GetCardByID", mock.Anything, "card-1").
+			Return(sqlc.Card{}, assert.AnError)
+
+		err := svc.DeleteCard("card-1", "user-1")
+
+		assert.Error(t, err)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("not owner", func(t *testing.T) {
+		repo := new(mockRepository)
+		listChecker := new(mockListChecker)
+		svc := newService(repo, listChecker)
+
+		card := sqlc.Card{
+			ID:          "card-1",
+			ListID:      "list-1",
+			Title:       "To Do",
+			Description: pgtype.Text{String: "Task description", Valid: true},
+			Status:      "open",
+			Position:    1,
+		}
+
+		repo.
+			On("GetCardByID", mock.Anything, "card-1").
+			Return(card, nil)
+
+		listChecker.
+			On("IsOwner", "list-1", "user-1").
+			Return(false, assert.AnError)
+
+		err := svc.DeleteCard("card-1", "user-1")
+
+		assert.Error(t, err)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("repo error", func(t *testing.T) {
+		repo := new(mockRepository)
+		listChecker := new(mockListChecker)
+		svc := newService(repo, listChecker)
+
+		card := sqlc.Card{
+			ID:          "card-1",
+			ListID:      "list-1",
+			Title:       "To Do",
+			Description: pgtype.Text{String: "Task description", Valid: true},
+			Status:      "open",
+			Position:    1,
+		}
+
+		repo.
+			On("GetCardByID", mock.Anything, "card-1").
+			Return(card, nil)
+
+		listChecker.
+			On("IsOwner", "list-1", "user-1").
+			Return(true, nil)
+
+		repo.
+			On("DeleteCardByID", mock.Anything, "card-1").
+			Return(assert.AnError)
+
+		err := svc.DeleteCard("card-1", "user-1")
+
+		assert.Error(t, err)
 		repo.AssertExpectations(t)
 	})
 }

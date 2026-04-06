@@ -19,3 +19,7 @@ UPDATE cards
 SET title = $1, description = $2, status = $3, position = $4, updated_at = now()
 WHERE id = $5
 RETURNING *;
+
+-- name: DeleteCardByID :exec
+DELETE FROM cards
+WHERE id = $1;

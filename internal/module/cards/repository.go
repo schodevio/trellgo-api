@@ -12,6 +12,7 @@ type Repository interface {
 	GetListCards(ctx context.Context, listID string) ([]sqlc.Card, error)
 	GetCardByID(ctx context.Context, cardID string) (sqlc.Card, error)
 	UpdateCardByID(ctx context.Context, cardID, title, description, status string, position int32) (sqlc.Card, error)
+	DeleteCardByID(ctx context.Context, cardID string) error
 }
 
 type repository struct {
@@ -48,4 +49,8 @@ func (r *repository) UpdateCardByID(ctx context.Context, cardID, title, descript
 		Status:      status,
 		Position:    position,
 	})
+}
+
+func (r *repository) DeleteCardByID(ctx context.Context, cardID string) error {
+	return r.queries.DeleteCardByID(ctx, cardID)
 }

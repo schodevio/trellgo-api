@@ -15,7 +15,7 @@ func newHandler(service Service) *handler {
 }
 
 // Create godoc
-// @Summary      Create a list card
+// @Summary      Create a card in a list
 // @Tags         cards
 // @Accept       json
 // @Produce      json
@@ -54,7 +54,7 @@ func (h *handler) Create(ctx fiber.Ctx) error {
 }
 
 // List godoc
-// @Summary      List list cards
+// @Summary      List cards of a list
 // @Tags         cards
 // @Produce      json
 // @Param        list_id  path      string  true  "List ID"
@@ -80,7 +80,7 @@ func (h *handler) List(ctx fiber.Ctx) error {
 }
 
 // Update godoc
-// @Summary      Update a list card
+// @Summary      Update a card
 // @Tags         cards
 // @Accept       json
 // @Produce      json
@@ -116,4 +116,29 @@ func (h *handler) Update(ctx fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(resp)
+}
+
+// Delete godoc
+// @Summary      Delete a card
+// @Tags         cards
+// @Produce      json
+// @Param        id   path      string  true  "Card ID"
+// @Success      204
+// @Failure      401  {object}  apierrors.ErrorResponse
+// @Failure      404  {object}  apierrors.ErrorResponse
+// @Security     BearerAuth
+// @Router       /cards/{id} [delete]
+func (h *handler) Delete(ctx fiber.Ctx) error {
+	userID, ok := ctx.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return apierrors.Unauthorized("missing user identity")
+	}
+
+	id := ctx.Params("id")
+
+	if err := h.service.DeleteCard(id, userID); err != nil {
+		return err
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
 }

@@ -47,6 +47,16 @@ func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (Card, e
 	return i, err
 }
 
+const deleteCardByID = `-- name: DeleteCardByID :exec
+DELETE FROM cards
+WHERE id = $1
+`
+
+func (q *Queries) DeleteCardByID(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteCardByID, id)
+	return err
+}
+
 const getCardByID = `-- name: GetCardByID :one
 SELECT id, list_id, position, title, description, status, created_at, updated_at
 FROM cards

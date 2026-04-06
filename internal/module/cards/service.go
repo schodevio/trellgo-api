@@ -10,6 +10,7 @@ type Service interface {
 	CreateCard(listID, userID string, req *CreateCardRequest) (SingleCardResponse, error)
 	ListCards(listID, userID string) (ListCardsResponse, error)
 	UpdateCard(cardID, userID string, req *UpdateCardRequest) (SingleCardResponse, error)
+	DeleteCard(cardID, userID string) error
 }
 
 type listChecker interface {
@@ -103,4 +104,21 @@ func (s *service) UpdateCard(cardID, userID string, req *UpdateCardRequest) (Sin
 			UpdatedAt:   updatedCard.UpdatedAt.Time.String(),
 		},
 	}, nil
+}
+
+func (s *service) DeleteCard(cardID, userID string) error {
+	card, err := s.repo.GetCardByID(context.Background(), cardID)
+	if err != nil {
+		return apierrors.NotFound("card not found")
+	}
+
+	if _, err := s.listChecker.IsOwner(card.ListID, userID); err != nil {
+		return err
+	}
+
+	if err := s.repo.DeleteCardByID(context.Background(), cardID); err != nil {
+		return apierrors.Internal("failed to delete card")
+	}
+
+	return nil
 }
