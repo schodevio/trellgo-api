@@ -127,19 +127,18 @@ func (q *Queries) GetUserListByID(ctx context.Context, arg GetUserListByIDParams
 
 const updateListByID = `-- name: UpdateListByID :one
 UPDATE lists
-SET name = $1, position = $2, updated_at = now()
-WHERE id = $3
+SET name = $1, updated_at = now()
+WHERE id = $2
 RETURNING id, name, board_id, position, created_at, updated_at
 `
 
 type UpdateListByIDParams struct {
-	Name     string `json:"name"`
-	Position int32  `json:"position"`
-	ID       string `json:"id"`
+	Name string `json:"name"`
+	ID   string `json:"id"`
 }
 
 func (q *Queries) UpdateListByID(ctx context.Context, arg UpdateListByIDParams) (List, error) {
-	row := q.db.QueryRow(ctx, updateListByID, arg.Name, arg.Position, arg.ID)
+	row := q.db.QueryRow(ctx, updateListByID, arg.Name, arg.ID)
 	var i List
 	err := row.Scan(
 		&i.ID,

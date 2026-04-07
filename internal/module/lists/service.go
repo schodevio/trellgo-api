@@ -84,7 +84,7 @@ func (s *service) UpdateList(id, userID string, req *UpdateListRequest) (SingleL
 		return SingleListResponse{}, err
 	}
 
-	list, err = s.repo.UpdateListByID(context.Background(), id, req.Name, req.Position)
+	list, err = s.repo.UpdateListByID(context.Background(), id, req.Name)
 	if err != nil {
 		return SingleListResponse{}, apierrors.Internal(LIST_UPDATE_FAILED)
 	}

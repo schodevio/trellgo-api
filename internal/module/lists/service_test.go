@@ -36,8 +36,8 @@ func (m *mockRepository) GetListByID(ctx context.Context, id string) (sqlc.List,
 	return args.Get(0).(sqlc.List), args.Error(1)
 }
 
-func (m *mockRepository) UpdateListByID(ctx context.Context, id, name string, position int32) (sqlc.List, error) {
-	args := m.Called(ctx, id, name, position)
+func (m *mockRepository) UpdateListByID(ctx context.Context, id, name string) (sqlc.List, error) {
+	args := m.Called(ctx, id, name)
 	return args.Get(0).(sqlc.List), args.Error(1)
 }
 
@@ -220,9 +220,9 @@ func TestUpdateList(t *testing.T) {
 		boardChecker := new(mockBoardChecker)
 		svc := newService(repo, boardChecker)
 
-		req := &UpdateListRequest{Name: "Updated", Position: 2}
+		req := &UpdateListRequest{Name: "Updated"}
 		existing := sqlc.List{ID: "list-1", Name: "Old", BoardID: "board-1", Position: 1}
-		updated := sqlc.List{ID: "list-1", Name: "Updated", BoardID: "board-1", Position: 2}
+		updated := sqlc.List{ID: "list-1", Name: "Updated", BoardID: "board-1", Position: 1}
 
 		repo.
 			On("GetListByID", mock.Anything, "list-1").
@@ -233,7 +233,7 @@ func TestUpdateList(t *testing.T) {
 			Return(true, nil)
 
 		repo.
-			On("UpdateListByID", mock.Anything, "list-1", req.Name, req.Position).
+			On("UpdateListByID", mock.Anything, "list-1", req.Name).
 			Return(updated, nil)
 
 		resp, err := svc.UpdateList("list-1", "user-1", req)
@@ -251,7 +251,7 @@ func TestUpdateList(t *testing.T) {
 		boardChecker := new(mockBoardChecker)
 		svc := newService(repo, boardChecker)
 
-		req := &UpdateListRequest{Name: "Updated", Position: 2}
+		req := &UpdateListRequest{Name: "Updated"}
 
 		repo.
 			On("GetListByID", mock.Anything, "list-1").
@@ -270,7 +270,7 @@ func TestUpdateList(t *testing.T) {
 		boardChecker := new(mockBoardChecker)
 		svc := newService(repo, boardChecker)
 
-		req := &UpdateListRequest{Name: "Updated", Position: 2}
+		req := &UpdateListRequest{Name: "Updated"}
 		existing := sqlc.List{ID: "list-1", Name: "Old", BoardID: "board-1", Position: 1}
 
 		repo.
@@ -295,7 +295,7 @@ func TestUpdateList(t *testing.T) {
 		boardChecker := new(mockBoardChecker)
 		svc := newService(repo, boardChecker)
 
-		req := &UpdateListRequest{Name: "Updated", Position: 2}
+		req := &UpdateListRequest{Name: "Updated"}
 		existing := sqlc.List{ID: "list-1", Name: "Old", BoardID: "board-1", Position: 1}
 
 		repo.
@@ -307,7 +307,7 @@ func TestUpdateList(t *testing.T) {
 			Return(true, nil)
 
 		repo.
-			On("UpdateListByID", mock.Anything, "list-1", req.Name, req.Position).
+			On("UpdateListByID", mock.Anything, "list-1", req.Name).
 			Return(sqlc.List{}, errors.New("db error"))
 
 		resp, err := svc.UpdateList("list-1", "user-1", req)

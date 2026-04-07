@@ -22,8 +22,8 @@ WHERE id = $1;
 
 -- name: UpdateListByID :one
 UPDATE lists
-SET name = $1, position = $2, updated_at = now()
-WHERE id = $3
+SET name = $1, updated_at = now()
+WHERE id = $2
 RETURNING *;
 
 -- name: DeleteListByID :exec

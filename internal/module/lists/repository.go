@@ -11,7 +11,7 @@ type Repository interface {
 	GetBoardLists(ctx context.Context, boardID string) ([]sqlc.List, error)
 	GetUserListByID(ctx context.Context, listID, userID string) (sqlc.List, error)
 	GetListByID(ctx context.Context, listID string) (sqlc.List, error)
-	UpdateListByID(ctx context.Context, listID, name string, position int32) (sqlc.List, error)
+	UpdateListByID(ctx context.Context, listID, name string) (sqlc.List, error)
 	DeleteListByID(ctx context.Context, listID string) error
 }
 
@@ -46,11 +46,10 @@ func (r *repository) GetUserListByID(ctx context.Context, listID, userID string)
 	})
 }
 
-func (r *repository) UpdateListByID(ctx context.Context, listID, name string, position int32) (sqlc.List, error) {
+func (r *repository) UpdateListByID(ctx context.Context, listID, name string) (sqlc.List, error) {
 	return r.queries.UpdateListByID(ctx, sqlc.UpdateListByIDParams{
-		ID:       listID,
-		Name:     name,
-		Position: position,
+		ID:   listID,
+		Name: name,
 	})
 }
 
