@@ -153,9 +153,6 @@ definitions:
       description:
         maxLength: 1000
         type: string
-      position:
-        minimum: 0
-        type: integer
       status:
         enum:
         - todo
@@ -167,7 +164,6 @@ definitions:
         minLength: 1
         type: string
     required:
-    - position
     - status
     - title
     type: object

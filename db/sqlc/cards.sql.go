@@ -117,8 +117,8 @@ func (q *Queries) GetListCards(ctx context.Context, listID string) ([]Card, erro
 
 const updateCardByID = `-- name: UpdateCardByID :one
 UPDATE cards
-SET title = $1, description = $2, status = $3, position = $4, updated_at = now()
-WHERE id = $5
+SET title = $1, description = $2, status = $3, updated_at = now()
+WHERE id = $4
 RETURNING id, list_id, position, title, description, status, created_at, updated_at
 `
 
@@ -126,7 +126,6 @@ type UpdateCardByIDParams struct {
 	Title       string      `json:"title"`
 	Description pgtype.Text `json:"description"`
 	Status      string      `json:"status"`
-	Position    int32       `json:"position"`
 	ID          string      `json:"id"`
 }
 
@@ -135,7 +134,6 @@ func (q *Queries) UpdateCardByID(ctx context.Context, arg UpdateCardByIDParams) 
 		arg.Title,
 		arg.Description,
 		arg.Status,
-		arg.Position,
 		arg.ID,
 	)
 	var i Card

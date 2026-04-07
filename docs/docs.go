@@ -1035,7 +1035,6 @@ const docTemplate = `{
         "cards.UpdateCardRequest": {
             "type": "object",
             "required": [
-                "position",
                 "status",
                 "title"
             ],
@@ -1043,10 +1042,6 @@ const docTemplate = `{
                 "description": {
                     "type": "string",
                     "maxLength": 1000
-                },
-                "position": {
-                    "type": "integer",
-                    "minimum": 0
                 },
                 "status": {
                     "type": "string",

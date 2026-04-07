@@ -31,8 +31,8 @@ func (m *mockRepository) GetCardByID(ctx context.Context, cardID string) (sqlc.C
 	return args.Get(0).(sqlc.Card), args.Error(1)
 }
 
-func (m *mockRepository) UpdateCardByID(ctx context.Context, cardID, title, description, status string, position int32) (sqlc.Card, error) {
-	args := m.Called(ctx, cardID, title, description, status, position)
+func (m *mockRepository) UpdateCardByID(ctx context.Context, cardID, title, description, status string) (sqlc.Card, error) {
+	args := m.Called(ctx, cardID, title, description, status)
 	return args.Get(0).(sqlc.Card), args.Error(1)
 }
 
@@ -235,7 +235,6 @@ func TestUpdateCard(t *testing.T) {
 			Title:       "In Progress",
 			Description: "Updated task description",
 			Status:      "in_progress",
-			Position:    2,
 		}
 
 		listChecker.
@@ -247,14 +246,14 @@ func TestUpdateCard(t *testing.T) {
 			Return(card, nil)
 
 		repo.
-			On("UpdateCardByID", mock.Anything, "card-1", req.Title, req.Description, req.Status, req.Position).
+			On("UpdateCardByID", mock.Anything, "card-1", req.Title, req.Description, req.Status).
 			Return(sqlc.Card{
 				ID:          "card-1",
 				ListID:      "list-1",
 				Title:       req.Title,
 				Description: pgtype.Text{String: req.Description, Valid: true},
 				Status:      req.Status,
-				Position:    req.Position,
+				Position:    card.Position,
 			}, nil)
 
 		resp, err := svc.UpdateCard("card-1", "user-1", req)
@@ -263,7 +262,7 @@ func TestUpdateCard(t *testing.T) {
 		assert.Equal(t, req.Title, resp.Card.Title)
 		assert.Equal(t, req.Description, resp.Card.Description)
 		assert.Equal(t, req.Status, resp.Card.Status)
-		assert.Equal(t, req.Position, resp.Card.Position)
+		assert.Equal(t, card.Position, resp.Card.Position)
 		repo.AssertExpectations(t)
 	})
 
@@ -276,7 +275,6 @@ func TestUpdateCard(t *testing.T) {
 			Title:       "In Progress",
 			Description: "Updated task description",
 			Status:      "in_progress",
-			Position:    2,
 		}
 
 		repo.
@@ -308,7 +306,6 @@ func TestUpdateCard(t *testing.T) {
 			Title:       "In Progress",
 			Description: "Updated task description",
 			Status:      "in_progress",
-			Position:    2,
 		}
 
 		repo.
@@ -344,7 +341,6 @@ func TestUpdateCard(t *testing.T) {
 			Title:       "In Progress",
 			Description: "Updated task description",
 			Status:      "in_progress",
-			Position:    2,
 		}
 
 		repo.
@@ -356,7 +352,7 @@ func TestUpdateCard(t *testing.T) {
 			Return(true, nil)
 
 		repo.
-			On("UpdateCardByID", mock.Anything, "card-1", req.Title, req.Description, req.Status, req.Position).
+			On("UpdateCardByID", mock.Anything, "card-1", req.Title, req.Description, req.Status).
 			Return(sqlc.Card{}, assert.AnError)
 
 		resp, err := svc.UpdateCard("card-1", "user-1", req)

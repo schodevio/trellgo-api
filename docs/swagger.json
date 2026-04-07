@@ -1029,7 +1029,6 @@
         "cards.UpdateCardRequest": {
             "type": "object",
             "required": [
-                "position",
                 "status",
                 "title"
             ],
@@ -1037,10 +1036,6 @@
                 "description": {
                     "type": "string",
                     "maxLength": 1000
-                },
-                "position": {
-                    "type": "integer",
-                    "minimum": 0
                 },
                 "status": {
                     "type": "string",

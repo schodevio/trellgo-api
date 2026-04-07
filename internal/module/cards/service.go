@@ -87,7 +87,7 @@ func (s *service) UpdateCard(cardID, userID string, req *UpdateCardRequest) (Sin
 		return SingleCardResponse{}, err
 	}
 
-	updatedCard, err := s.repo.UpdateCardByID(context.Background(), cardID, req.Title, req.Description, req.Status, req.Position)
+	updatedCard, err := s.repo.UpdateCardByID(context.Background(), cardID, req.Title, req.Description, req.Status)
 	if err != nil {
 		return SingleCardResponse{}, apierrors.Internal(CARD_UPDATE_FAILED)
 	}

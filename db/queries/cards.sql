@@ -16,8 +16,8 @@ WHERE id = $1;
 
 -- name: UpdateCardByID :one
 UPDATE cards
-SET title = $1, description = $2, status = $3, position = $4, updated_at = now()
-WHERE id = $5
+SET title = $1, description = $2, status = $3, updated_at = now()
+WHERE id = $4
 RETURNING *;
 
 -- name: DeleteCardByID :exec
