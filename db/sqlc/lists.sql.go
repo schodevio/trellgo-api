@@ -125,6 +125,54 @@ func (q *Queries) GetUserListByID(ctx context.Context, arg GetUserListByIDParams
 	return i, err
 }
 
+const moveListByID = `-- name: MoveListByID :one
+UPDATE lists
+SET position = $1, updated_at = now()
+WHERE id = $2
+RETURNING id, name, board_id, position, created_at, updated_at
+`
+
+type MoveListByIDParams struct {
+	Position int32  `json:"position"`
+	ID       string `json:"id"`
+}
+
+func (q *Queries) MoveListByID(ctx context.Context, arg MoveListByIDParams) (List, error) {
+	row := q.db.QueryRow(ctx, moveListByID, arg.Position, arg.ID)
+	var i List
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.BoardID,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const reorderListsInBoard = `-- name: ReorderListsInBoard :exec
+WITH ranked AS (
+  SELECT
+    id,
+    ROW_NUMBER() OVER (
+      PARTITION BY lists.board_id
+      ORDER BY position ASC, updated_at DESC
+    ) AS new_position
+  FROM lists
+  WHERE lists.board_id = $1
+)
+UPDATE lists
+SET position = ranked.new_position
+FROM ranked
+WHERE lists.id = ranked.id
+`
+
+func (q *Queries) ReorderListsInBoard(ctx context.Context, boardID string) error {
+	_, err := q.db.Exec(ctx, reorderListsInBoard, boardID)
+	return err
+}
+
 const updateListByID = `-- name: UpdateListByID :one
 UPDATE lists
 SET name = $1, updated_at = now()

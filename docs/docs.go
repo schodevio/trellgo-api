@@ -770,6 +770,75 @@ const docTemplate = `{
                 }
             }
         },
+        "/lists/{id}/move": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lists"
+                ],
+                "summary": "Move a list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "List ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New position",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/lists.MoveListRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/lists.SingleListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apierrors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apierrors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/apierrors.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/apierrors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/lists/{list_id}/cards": {
             "get": {
                 "security": [
@@ -1168,6 +1237,18 @@ const docTemplate = `{
                 }
             }
         },
+        "lists.MoveListRequest": {
+            "type": "object",
+            "required": [
+                "position"
+            ],
+            "properties": {
+                "position": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
         "lists.SingleListResponse": {
             "type": "object",
             "properties": {
@@ -1179,18 +1260,13 @@ const docTemplate = `{
         "lists.UpdateListRequest": {
             "type": "object",
             "required": [
-                "name",
-                "position"
+                "name"
             ],
             "properties": {
                 "name": {
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 1
-                },
-                "position": {
-                    "type": "integer",
-                    "minimum": 0
                 }
             }
         }

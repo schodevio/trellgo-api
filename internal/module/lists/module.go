@@ -36,5 +36,6 @@ func (m *Module) RegisterRoutes(router fiber.Router) {
 	group := router.Group("/lists", middleware.Authenticate(m.authKey))
 
 	group.Patch("/:id", m.handler.Update)
+	group.Patch("/:id/move", m.handler.Move)
 	group.Delete("/:id", m.handler.Delete)
 }

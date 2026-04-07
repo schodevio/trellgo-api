@@ -262,11 +262,26 @@ Returns `404` if the board does not belong to the authenticated user.
 
 Request:
 ```json
-{ "name": "In Progress", "position": 1 }
+{ "name": "In Progress" }
 ```
 Response `200`:
 ```json
 { "list": { "id": "...", "name": "In Progress", "board_id": "...", "position": 1, "created_at": "...", "updated_at": "..." } }
+```
+Returns `404` if the list does not belong to the authenticated user.
+
+</details>
+
+<details>
+<summary><code>PATCH /api/v1/lists/:id/move</code></summary>
+
+Request:
+```json
+{ "position": 2 }
+```
+Response `200`:
+```json
+{ "list": { "id": "...", "name": "...", "board_id": "...", "position": 2, "created_at": "...", "updated_at": "..." } }
 ```
 Returns `404` if the list does not belong to the authenticated user.
 
@@ -291,13 +306,11 @@ Authorization: Bearer <access_token>
 
 Request:
 ```json
-{ "title": "My Card", "description": "Optional description", "status": "todo", "position": 0 }
+{ "title": "My Card", "description": "Optional description", "position": 0 }
 ```
-`status` must be one of: `todo`, `in_progress`, `done`.
-
 Response `201`:
 ```json
-{ "card": { "id": "...", "list_id": "...", "title": "My Card", "description": "Optional description", "status": "todo", "position": 0, "created_at": "...", "updated_at": "..." } }
+{ "card": { "id": "...", "list_id": "...", "title": "My Card", "description": "Optional description", "position": 0, "created_at": "...", "updated_at": "..." } }
 ```
 
 </details>
@@ -307,7 +320,7 @@ Response `201`:
 
 Response `200`:
 ```json
-{ "cards": [ { "id": "...", "list_id": "...", "title": "My Card", "description": "...", "status": "todo", "position": 0, "created_at": "...", "updated_at": "..." } ] }
+{ "cards": [ { "id": "...", "list_id": "...", "title": "My Card", "description": "...", "position": 0, "created_at": "...", "updated_at": "..." } ] }
 ```
 Returns `404` if the list does not belong to the authenticated user.
 
@@ -318,11 +331,26 @@ Returns `404` if the list does not belong to the authenticated user.
 
 Request:
 ```json
-{ "title": "Updated Card", "description": "Updated description", "status": "in_progress", "position": 1 }
+{ "title": "Updated Card", "description": "Updated description" }
 ```
 Response `200`:
 ```json
-{ "card": { "id": "...", "list_id": "...", "title": "Updated Card", "description": "Updated description", "status": "in_progress", "position": 1, "created_at": "...", "updated_at": "..." } }
+{ "card": { "id": "...", "list_id": "...", "title": "Updated Card", "description": "Updated description", "position": 0, "created_at": "...", "updated_at": "..." } }
+```
+Returns `404` if the card does not belong to the authenticated user.
+
+</details>
+
+<details>
+<summary><code>PATCH /api/v1/cards/:id/move</code></summary>
+
+Request:
+```json
+{ "list_id": "...", "position": 1 }
+```
+Response `200`:
+```json
+{ "card": { "id": "...", "list_id": "...", "title": "...", "description": "...", "position": 1, "created_at": "...", "updated_at": "..." } }
 ```
 Returns `404` if the card does not belong to the authenticated user.
 

@@ -26,6 +26,28 @@ SET name = $1, updated_at = now()
 WHERE id = $2
 RETURNING *;
 
+-- name: MoveListByID :one
+UPDATE lists
+SET position = $1, updated_at = now()
+WHERE id = $2
+RETURNING *;
+
+-- name: ReorderListsInBoard :exec
+WITH ranked AS (
+  SELECT
+    id,
+    ROW_NUMBER() OVER (
+      PARTITION BY lists.board_id
+      ORDER BY position ASC, updated_at DESC
+    ) AS new_position
+  FROM lists
+  WHERE lists.board_id = $1
+)
+UPDATE lists
+SET position = ranked.new_position
+FROM ranked
+WHERE lists.id = ranked.id;
+
 -- name: DeleteListByID :exec
 DELETE FROM lists
 WHERE id = $1;

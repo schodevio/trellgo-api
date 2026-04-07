@@ -197,6 +197,14 @@ definitions:
       updated_at:
         type: string
     type: object
+  lists.MoveListRequest:
+    properties:
+      position:
+        minimum: 0
+        type: integer
+    required:
+    - position
+    type: object
   lists.SingleListResponse:
     properties:
       list:
@@ -208,12 +216,8 @@ definitions:
         maxLength: 255
         minLength: 1
         type: string
-      position:
-        minimum: 0
-        type: integer
     required:
     - name
-    - position
     type: object
 host: localhost:3000
 info:
@@ -698,6 +702,50 @@ paths:
       security:
       - BearerAuth: []
       summary: Update a list
+      tags:
+      - lists
+  /lists/{id}/move:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: List ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New position
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/lists.MoveListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/lists.SingleListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Move a list
       tags:
       - lists
   /lists/{list_id}/cards:

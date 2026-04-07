@@ -12,6 +12,8 @@ type Repository interface {
 	GetUserListByID(ctx context.Context, listID, userID string) (sqlc.List, error)
 	GetListByID(ctx context.Context, listID string) (sqlc.List, error)
 	UpdateListByID(ctx context.Context, listID, name string) (sqlc.List, error)
+	MoveListByID(ctx context.Context, listID string, position int32) (sqlc.List, error)
+	ReorderListsInBoard(ctx context.Context, boardID string) error
 	DeleteListByID(ctx context.Context, listID string) error
 }
 
@@ -51,6 +53,17 @@ func (r *repository) UpdateListByID(ctx context.Context, listID, name string) (s
 		ID:   listID,
 		Name: name,
 	})
+}
+
+func (r *repository) MoveListByID(ctx context.Context, listID string, position int32) (sqlc.List, error) {
+	return r.queries.MoveListByID(ctx, sqlc.MoveListByIDParams{
+		ID:       listID,
+		Position: position,
+	})
+}
+
+func (r *repository) ReorderListsInBoard(ctx context.Context, boardID string) error {
+	return r.queries.ReorderListsInBoard(ctx, boardID)
 }
 
 func (r *repository) DeleteListByID(ctx context.Context, listID string) error {

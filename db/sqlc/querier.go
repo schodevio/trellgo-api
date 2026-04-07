@@ -29,7 +29,9 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id string) (User, error)
 	GetUserListByID(ctx context.Context, arg GetUserListByIDParams) (List, error)
 	MoveCardByID(ctx context.Context, arg MoveCardByIDParams) (Card, error)
+	MoveListByID(ctx context.Context, arg MoveListByIDParams) (List, error)
 	ReorderCardsInList(ctx context.Context, listID string) error
+	ReorderListsInBoard(ctx context.Context, boardID string) error
 	RevokeRefreshToken(ctx context.Context, id string) (RefreshToken, error)
 	UpdateBoardByID(ctx context.Context, arg UpdateBoardByIDParams) (Board, error)
 	UpdateCardByID(ctx context.Context, arg UpdateCardByIDParams) (Card, error)

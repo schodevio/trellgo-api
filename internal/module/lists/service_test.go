@@ -41,6 +41,16 @@ func (m *mockRepository) UpdateListByID(ctx context.Context, id, name string) (s
 	return args.Get(0).(sqlc.List), args.Error(1)
 }
 
+func (m *mockRepository) MoveListByID(ctx context.Context, id string, position int32) (sqlc.List, error) {
+	args := m.Called(ctx, id, position)
+	return args.Get(0).(sqlc.List), args.Error(1)
+}
+
+func (m *mockRepository) ReorderListsInBoard(ctx context.Context, boardID string) error {
+	args := m.Called(ctx, boardID)
+	return args.Error(0)
+}
+
 func (m *mockRepository) DeleteListByID(ctx context.Context, id string) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
@@ -74,6 +84,10 @@ func TestCreateList(t *testing.T) {
 			On("CreateList", mock.Anything, "board-1", req.Name, req.Position).
 			Return(list, nil)
 
+		repo.
+			On("ReorderListsInBoard", mock.Anything, "board-1").
+			Return(nil)
+
 		resp, err := svc.CreateList("board-1", "user-1", req)
 
 		assert.NoError(t, err)
@@ -103,7 +117,7 @@ func TestCreateList(t *testing.T) {
 		boardChecker.AssertExpectations(t)
 	})
 
-	t.Run("repo fails", func(t *testing.T) {
+	t.Run("repo fails on create", func(t *testing.T) {
 		repo := new(mockRepository)
 		boardChecker := new(mockBoardChecker)
 		svc := newService(repo, boardChecker)
@@ -117,6 +131,34 @@ func TestCreateList(t *testing.T) {
 		repo.
 			On("CreateList", mock.Anything, "board-1", req.Name, req.Position).
 			Return(sqlc.List{}, errors.New("db error"))
+
+		resp, err := svc.CreateList("board-1", "user-1", req)
+
+		assert.Error(t, err)
+		assert.Empty(t, resp.List.ID)
+		assert.ErrorContains(t, err, "failed to create list")
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("repo fails on reorder", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardChecker := new(mockBoardChecker)
+		svc := newService(repo, boardChecker)
+
+		req := &CreateListRequest{Name: "My List", Position: 1}
+		list := sqlc.List{ID: "list-1", Name: "My List", BoardID: "board-1", Position: 1}
+
+		boardChecker.
+			On("IsOwner", "board-1", "user-1").
+			Return(true, nil)
+
+		repo.
+			On("CreateList", mock.Anything, "board-1", req.Name, req.Position).
+			Return(list, nil)
+
+		repo.
+			On("ReorderListsInBoard", mock.Anything, "board-1").
+			Return(assert.AnError)
 
 		resp, err := svc.CreateList("board-1", "user-1", req)
 
@@ -315,6 +357,149 @@ func TestUpdateList(t *testing.T) {
 		assert.Error(t, err)
 		assert.Empty(t, resp.List.ID)
 		assert.ErrorContains(t, err, "failed to update list")
+		repo.AssertExpectations(t)
+		boardChecker.AssertExpectations(t)
+	})
+}
+
+func TestMoveList(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardChecker := new(mockBoardChecker)
+		svc := newService(repo, boardChecker)
+
+		req := &MoveListRequest{Position: 2}
+		existing := sqlc.List{ID: "list-1", Name: "My List", BoardID: "board-1", Position: 1}
+		moved := sqlc.List{ID: "list-1", Name: "My List", BoardID: "board-1", Position: 2}
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(existing, nil)
+
+		boardChecker.
+			On("IsOwner", "board-1", "user-1").
+			Return(true, nil)
+
+		repo.
+			On("MoveListByID", mock.Anything, "list-1", req.Position).
+			Return(moved, nil)
+
+		repo.
+			On("ReorderListsInBoard", mock.Anything, "board-1").
+			Return(nil)
+
+		resp, err := svc.MoveList("list-1", "user-1", req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, moved.ID, resp.List.ID)
+		assert.Equal(t, moved.Position, resp.List.Position)
+		repo.AssertExpectations(t)
+		boardChecker.AssertExpectations(t)
+	})
+
+	t.Run("list not found", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardChecker := new(mockBoardChecker)
+		svc := newService(repo, boardChecker)
+
+		req := &MoveListRequest{Position: 2}
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(sqlc.List{}, assert.AnError)
+
+		resp, err := svc.MoveList("list-1", "user-1", req)
+
+		assert.Error(t, err)
+		assert.Empty(t, resp.List.ID)
+		assert.ErrorContains(t, err, "list not found")
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("not owner", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardChecker := new(mockBoardChecker)
+		svc := newService(repo, boardChecker)
+
+		req := &MoveListRequest{Position: 2}
+		existing := sqlc.List{ID: "list-1", Name: "My List", BoardID: "board-1", Position: 1}
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(existing, nil)
+
+		boardChecker.
+			On("IsOwner", "board-1", "user-1").
+			Return(false, errors.New("board not found"))
+
+		resp, err := svc.MoveList("list-1", "user-1", req)
+
+		assert.Error(t, err)
+		assert.Empty(t, resp.List.ID)
+		assert.ErrorContains(t, err, "board not found")
+		repo.AssertExpectations(t)
+		boardChecker.AssertExpectations(t)
+	})
+
+	t.Run("repo fails on move", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardChecker := new(mockBoardChecker)
+		svc := newService(repo, boardChecker)
+
+		req := &MoveListRequest{Position: 2}
+		existing := sqlc.List{ID: "list-1", Name: "My List", BoardID: "board-1", Position: 1}
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(existing, nil)
+
+		boardChecker.
+			On("IsOwner", "board-1", "user-1").
+			Return(true, nil)
+
+		repo.
+			On("MoveListByID", mock.Anything, "list-1", req.Position).
+			Return(sqlc.List{}, errors.New("db error"))
+
+		resp, err := svc.MoveList("list-1", "user-1", req)
+
+		assert.Error(t, err)
+		assert.Empty(t, resp.List.ID)
+		assert.ErrorContains(t, err, "failed to move list")
+		repo.AssertExpectations(t)
+		boardChecker.AssertExpectations(t)
+	})
+
+	t.Run("repo fails on reorder", func(t *testing.T) {
+		repo := new(mockRepository)
+		boardChecker := new(mockBoardChecker)
+		svc := newService(repo, boardChecker)
+
+		req := &MoveListRequest{Position: 2}
+		existing := sqlc.List{ID: "list-1", Name: "My List", BoardID: "board-1", Position: 1}
+		moved := sqlc.List{ID: "list-1", Name: "My List", BoardID: "board-1", Position: 2}
+
+		repo.
+			On("GetListByID", mock.Anything, "list-1").
+			Return(existing, nil)
+
+		boardChecker.
+			On("IsOwner", "board-1", "user-1").
+			Return(true, nil)
+
+		repo.
+			On("MoveListByID", mock.Anything, "list-1", req.Position).
+			Return(moved, nil)
+
+		repo.
+			On("ReorderListsInBoard", mock.Anything, "board-1").
+			Return(assert.AnError)
+
+		resp, err := svc.MoveList("list-1", "user-1", req)
+
+		assert.Error(t, err)
+		assert.Empty(t, resp.List.ID)
+		assert.ErrorContains(t, err, "failed to move list")
 		repo.AssertExpectations(t)
 		boardChecker.AssertExpectations(t)
 	})

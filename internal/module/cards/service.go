@@ -43,7 +43,7 @@ func (s *service) CreateCard(listID, userID string, req *CreateCardRequest) (Sin
 
 	// Reorder cards in the list
 	if err := s.repo.ReorderCardsInList(ctx, listID); err != nil {
-		return SingleCardResponse{}, apierrors.Internal(CARD_UPDATE_FAILED)
+		return SingleCardResponse{}, apierrors.Internal(CARD_CREATE_FAILED)
 	}
 
 	return SingleCardResponse{
@@ -144,18 +144,18 @@ func (s *service) MoveCard(cardID, userID string, req *MoveCardRequest) (SingleC
 	// Update card's list and position
 	card, err = s.repo.MoveCardByID(ctx, cardID, req.ListID, req.Position)
 	if err != nil {
-		return SingleCardResponse{}, apierrors.Internal(CARD_UPDATE_FAILED)
+		return SingleCardResponse{}, apierrors.Internal(CARD_MOVE_FAILED)
 	}
 
 	// Reorder cards in the new list
 	if err := s.repo.ReorderCardsInList(ctx, req.ListID); err != nil {
-		return SingleCardResponse{}, apierrors.Internal(CARD_UPDATE_FAILED)
+		return SingleCardResponse{}, apierrors.Internal(CARD_MOVE_FAILED)
 	}
 
 	// If the card was moved to a different list, reorder cards in the old list as well
 	if oldListID != req.ListID {
 		if err := s.repo.ReorderCardsInList(ctx, oldListID); err != nil {
-			return SingleCardResponse{}, apierrors.Internal(CARD_UPDATE_FAILED)
+			return SingleCardResponse{}, apierrors.Internal(CARD_MOVE_FAILED)
 		}
 	}
 

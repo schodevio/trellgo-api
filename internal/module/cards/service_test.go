@@ -186,6 +186,7 @@ func TestCreateCard(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Equal(t, SingleCardResponse{}, resp)
+		assert.ErrorContains(t, err, "failed to create card")
 		repo.AssertExpectations(t)
 	})
 }
@@ -585,6 +586,7 @@ func TestMoveCard(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Equal(t, SingleCardResponse{}, resp)
+		assert.ErrorContains(t, err, "failed to move card")
 		repo.AssertExpectations(t)
 	})
 
@@ -636,6 +638,7 @@ func TestMoveCard(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Equal(t, SingleCardResponse{}, resp)
+		assert.ErrorContains(t, err, "failed to move card")
 		repo.AssertExpectations(t)
 	})
 }

@@ -6,6 +6,7 @@ const (
 	CARDS_FETCH_FAILED string = "failed to fetch cards"
 	CARD_CREATE_FAILED string = "failed to create card"
 	CARD_UPDATE_FAILED string = "failed to update card"
+	CARD_MOVE_FAILED   string = "failed to move card"
 	CARD_DELETE_FAILED string = "failed to delete card"
 )
 

@@ -120,6 +120,46 @@ func (h *handler) Update(ctx fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(resp)
 }
 
+// Move godoc
+// @Summary      Move a list
+// @Tags         lists
+// @Accept       json
+// @Produce      json
+// @Param        id    path      string             true  "List ID"
+// @Param        body  body      MoveListRequest    true  "New position"
+// @Success      200   {object}  SingleListResponse
+// @Failure      400   {object}  apierrors.ErrorResponse
+// @Failure      401   {object}  apierrors.ErrorResponse
+// @Failure      404   {object}  apierrors.ErrorResponse
+// @Failure      422   {object}  apierrors.ErrorResponse
+// @Security     BearerAuth
+// @Router       /lists/{id}/move [patch]
+func (h *handler) Move(ctx fiber.Ctx) error {
+	var req MoveListRequest
+
+	if err := ctx.Bind().Body(&req); err != nil {
+		return apierrors.BadRequest(shared.REQUEST_VALIDATION_FAILED)
+	}
+
+	if err := validator.Validate(&req); err != nil {
+		return err
+	}
+
+	userID, ok := ctx.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return apierrors.Unauthorized(shared.USER_AUTHENTICATION_FAILED)
+	}
+
+	id := ctx.Params("id")
+
+	resp, err := h.service.MoveList(id, userID, &req)
+	if err != nil {
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(resp)
+}
+
 // Delete godoc
 // @Summary      Delete a list
 // @Tags         lists
