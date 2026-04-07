@@ -1,6 +1,6 @@
 -- name: CreateCard :one
-INSERT INTO cards (list_id, title, description, status, position)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO cards (list_id, title, description, position)
+VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: GetListCards :many
@@ -16,8 +16,8 @@ WHERE id = $1;
 
 -- name: UpdateCardByID :one
 UPDATE cards
-SET title = $1, description = $2, status = $3, updated_at = now()
-WHERE id = $4
+SET title = $1, description = $2, updated_at = now()
+WHERE id = $3
 RETURNING *;
 
 -- name: MoveCardByID :one

@@ -22,7 +22,6 @@ type Card struct {
 	Position    int32              `json:"position"`
 	Title       string             `json:"title"`
 	Description pgtype.Text        `json:"description"`
-	Status      string             `json:"status"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }

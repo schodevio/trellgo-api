@@ -28,13 +28,22 @@ func newService(repo Repository, listChecker listChecker) Service {
 }
 
 func (s *service) CreateCard(listID, userID string, req *CreateCardRequest) (SingleCardResponse, error) {
+	ctx := context.Background()
+
+	// Check list ownership
 	if _, err := s.listChecker.IsOwner(listID, userID); err != nil {
 		return SingleCardResponse{}, err
 	}
 
-	card, err := s.repo.CreateCard(context.Background(), listID, req.Title, req.Description, req.Status, req.Position)
+	// Create the card
+	card, err := s.repo.CreateCard(ctx, listID, req.Title, req.Description, req.Position)
 	if err != nil {
 		return SingleCardResponse{}, apierrors.Internal(CARD_CREATE_FAILED)
+	}
+
+	// Reorder cards in the list
+	if err := s.repo.ReorderCardsInList(ctx, listID); err != nil {
+		return SingleCardResponse{}, apierrors.Internal(CARD_UPDATE_FAILED)
 	}
 
 	return SingleCardResponse{
@@ -43,7 +52,6 @@ func (s *service) CreateCard(listID, userID string, req *CreateCardRequest) (Sin
 			ListID:      card.ListID,
 			Title:       card.Title,
 			Description: card.Description.String,
-			Status:      card.Status,
 			Position:    card.Position,
 			CreatedAt:   card.CreatedAt.Time.String(),
 			UpdatedAt:   card.UpdatedAt.Time.String(),
@@ -68,7 +76,6 @@ func (s *service) ListCards(listID, userID string) (ListCardsResponse, error) {
 			ListID:      card.ListID,
 			Title:       card.Title,
 			Description: card.Description.String,
-			Status:      card.Status,
 			Position:    card.Position,
 			CreatedAt:   card.CreatedAt.Time.String(),
 			UpdatedAt:   card.UpdatedAt.Time.String(),
@@ -79,16 +86,21 @@ func (s *service) ListCards(listID, userID string) (ListCardsResponse, error) {
 }
 
 func (s *service) UpdateCard(cardID, userID string, req *UpdateCardRequest) (SingleCardResponse, error) {
-	card, err := s.repo.GetCardByID(context.Background(), cardID)
+	ctx := context.Background()
+
+	// Fetch the card
+	card, err := s.repo.GetCardByID(ctx, cardID)
 	if err != nil {
 		return SingleCardResponse{}, apierrors.NotFound(CARD_NOT_FOUND)
 	}
 
+	// Check card ownership
 	if _, err := s.listChecker.IsOwner(card.ListID, userID); err != nil {
 		return SingleCardResponse{}, err
 	}
 
-	card, err = s.repo.UpdateCardByID(context.Background(), cardID, req.Title, req.Description, req.Status)
+	// Update the card
+	card, err = s.repo.UpdateCardByID(ctx, cardID, req.Title, req.Description)
 	if err != nil {
 		return SingleCardResponse{}, apierrors.Internal(CARD_UPDATE_FAILED)
 	}
@@ -99,7 +111,6 @@ func (s *service) UpdateCard(cardID, userID string, req *UpdateCardRequest) (Sin
 			ListID:      card.ListID,
 			Title:       card.Title,
 			Description: card.Description.String,
-			Status:      card.Status,
 			Position:    card.Position,
 			CreatedAt:   card.CreatedAt.Time.String(),
 			UpdatedAt:   card.UpdatedAt.Time.String(),
@@ -154,7 +165,6 @@ func (s *service) MoveCard(cardID, userID string, req *MoveCardRequest) (SingleC
 			ListID:      card.ListID,
 			Title:       card.Title,
 			Description: card.Description.String,
-			Status:      card.Status,
 			Position:    card.Position,
 			CreatedAt:   card.CreatedAt.Time.String(),
 			UpdatedAt:   card.UpdatedAt.Time.String(),
@@ -163,16 +173,21 @@ func (s *service) MoveCard(cardID, userID string, req *MoveCardRequest) (SingleC
 }
 
 func (s *service) DeleteCard(cardID, userID string) error {
-	card, err := s.repo.GetCardByID(context.Background(), cardID)
+	ctx := context.Background()
+
+	// Fetch the card
+	card, err := s.repo.GetCardByID(ctx, cardID)
 	if err != nil {
 		return apierrors.NotFound(CARD_NOT_FOUND)
 	}
 
+	// Check card ownership
 	if _, err := s.listChecker.IsOwner(card.ListID, userID); err != nil {
 		return err
 	}
 
-	if err := s.repo.DeleteCardByID(context.Background(), cardID); err != nil {
+	// Delete the card
+	if err := s.repo.DeleteCardByID(ctx, cardID); err != nil {
 		return apierrors.Internal(CARD_DELETE_FAILED)
 	}
 

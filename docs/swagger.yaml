@@ -106,8 +106,6 @@ definitions:
         type: string
       position:
         type: integer
-      status:
-        type: string
       title:
         type: string
       updated_at:
@@ -121,19 +119,12 @@ definitions:
       position:
         minimum: 0
         type: integer
-      status:
-        enum:
-        - todo
-        - in_progress
-        - done
-        type: string
       title:
         maxLength: 255
         minLength: 1
         type: string
     required:
     - position
-    - status
     - title
     type: object
   cards.ListCardsResponse:
@@ -164,18 +155,11 @@ definitions:
       description:
         maxLength: 1000
         type: string
-      status:
-        enum:
-        - todo
-        - in_progress
-        - done
-        type: string
       title:
         maxLength: 255
         minLength: 1
         type: string
     required:
-    - status
     - title
     type: object
   lists.CreateListRequest:

@@ -8,10 +8,10 @@ import (
 )
 
 type Repository interface {
-	CreateCard(ctx context.Context, listID, title, description, status string, position int32) (sqlc.Card, error)
+	CreateCard(ctx context.Context, listID, title, description string, position int32) (sqlc.Card, error)
 	GetListCards(ctx context.Context, listID string) ([]sqlc.Card, error)
 	GetCardByID(ctx context.Context, cardID string) (sqlc.Card, error)
-	UpdateCardByID(ctx context.Context, cardID, title, description, status string) (sqlc.Card, error)
+	UpdateCardByID(ctx context.Context, cardID, title, description string) (sqlc.Card, error)
 	MoveCardByID(ctx context.Context, cardID, listID string, position int32) (sqlc.Card, error)
 	ReorderCardsInList(ctx context.Context, listID string) error
 	DeleteCardByID(ctx context.Context, cardID string) error
@@ -25,12 +25,11 @@ func newRepository(queries *sqlc.Queries) Repository {
 	return &repository{queries: queries}
 }
 
-func (r *repository) CreateCard(ctx context.Context, listID, title, description, status string, position int32) (sqlc.Card, error) {
+func (r *repository) CreateCard(ctx context.Context, listID, title, description string, position int32) (sqlc.Card, error) {
 	return r.queries.CreateCard(ctx, sqlc.CreateCardParams{
 		ListID:      listID,
 		Title:       title,
 		Description: pgtype.Text{String: description, Valid: description != ""},
-		Status:      status,
 		Position:    position,
 	})
 }
@@ -43,12 +42,11 @@ func (r *repository) GetCardByID(ctx context.Context, cardID string) (sqlc.Card,
 	return r.queries.GetCardByID(ctx, cardID)
 }
 
-func (r *repository) UpdateCardByID(ctx context.Context, cardID, title, description, status string) (sqlc.Card, error) {
+func (r *repository) UpdateCardByID(ctx context.Context, cardID, title, description string) (sqlc.Card, error) {
 	return r.queries.UpdateCardByID(ctx, sqlc.UpdateCardByIDParams{
 		ID:          cardID,
 		Title:       title,
 		Description: pgtype.Text{String: description, Valid: description != ""},
-		Status:      status,
 	})
 }
 

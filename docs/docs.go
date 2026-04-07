@@ -1034,9 +1034,6 @@ const docTemplate = `{
                 "position": {
                     "type": "integer"
                 },
-                "status": {
-                    "type": "string"
-                },
                 "title": {
                     "type": "string"
                 },
@@ -1049,7 +1046,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "position",
-                "status",
                 "title"
             ],
             "properties": {
@@ -1060,14 +1056,6 @@ const docTemplate = `{
                 "position": {
                     "type": "integer",
                     "minimum": 0
-                },
-                "status": {
-                    "type": "string",
-                    "enum": [
-                        "todo",
-                        "in_progress",
-                        "done"
-                    ]
                 },
                 "title": {
                     "type": "string",
@@ -1114,21 +1102,12 @@ const docTemplate = `{
         "cards.UpdateCardRequest": {
             "type": "object",
             "required": [
-                "status",
                 "title"
             ],
             "properties": {
                 "description": {
                     "type": "string",
                     "maxLength": 1000
-                },
-                "status": {
-                    "type": "string",
-                    "enum": [
-                        "todo",
-                        "in_progress",
-                        "done"
-                    ]
                 },
                 "title": {
                     "type": "string",

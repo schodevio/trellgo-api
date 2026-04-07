@@ -12,16 +12,15 @@ import (
 )
 
 const createCard = `-- name: CreateCard :one
-INSERT INTO cards (list_id, title, description, status, position)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, list_id, position, title, description, status, created_at, updated_at
+INSERT INTO cards (list_id, title, description, position)
+VALUES ($1, $2, $3, $4)
+RETURNING id, list_id, position, title, description, created_at, updated_at
 `
 
 type CreateCardParams struct {
 	ListID      string      `json:"list_id"`
 	Title       string      `json:"title"`
 	Description pgtype.Text `json:"description"`
-	Status      string      `json:"status"`
 	Position    int32       `json:"position"`
 }
 
@@ -30,7 +29,6 @@ func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (Card, e
 		arg.ListID,
 		arg.Title,
 		arg.Description,
-		arg.Status,
 		arg.Position,
 	)
 	var i Card
@@ -40,7 +38,6 @@ func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (Card, e
 		&i.Position,
 		&i.Title,
 		&i.Description,
-		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -58,7 +55,7 @@ func (q *Queries) DeleteCardByID(ctx context.Context, id string) error {
 }
 
 const getCardByID = `-- name: GetCardByID :one
-SELECT id, list_id, position, title, description, status, created_at, updated_at
+SELECT id, list_id, position, title, description, created_at, updated_at
 FROM cards
 WHERE id = $1
 `
@@ -72,7 +69,6 @@ func (q *Queries) GetCardByID(ctx context.Context, id string) (Card, error) {
 		&i.Position,
 		&i.Title,
 		&i.Description,
-		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -80,7 +76,7 @@ func (q *Queries) GetCardByID(ctx context.Context, id string) (Card, error) {
 }
 
 const getListCards = `-- name: GetListCards :many
-SELECT id, list_id, position, title, description, status, created_at, updated_at
+SELECT id, list_id, position, title, description, created_at, updated_at
 FROM cards
 WHERE list_id = $1
 ORDER BY position ASC
@@ -101,7 +97,6 @@ func (q *Queries) GetListCards(ctx context.Context, listID string) ([]Card, erro
 			&i.Position,
 			&i.Title,
 			&i.Description,
-			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -119,7 +114,7 @@ const moveCardByID = `-- name: MoveCardByID :one
 UPDATE cards
 SET list_id = $1, position = $2, updated_at = now()
 WHERE id = $3
-RETURNING id, list_id, position, title, description, status, created_at, updated_at
+RETURNING id, list_id, position, title, description, created_at, updated_at
 `
 
 type MoveCardByIDParams struct {
@@ -137,7 +132,6 @@ func (q *Queries) MoveCardByID(ctx context.Context, arg MoveCardByIDParams) (Car
 		&i.Position,
 		&i.Title,
 		&i.Description,
-		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -168,25 +162,19 @@ func (q *Queries) ReorderCardsInList(ctx context.Context, listID string) error {
 
 const updateCardByID = `-- name: UpdateCardByID :one
 UPDATE cards
-SET title = $1, description = $2, status = $3, updated_at = now()
-WHERE id = $4
-RETURNING id, list_id, position, title, description, status, created_at, updated_at
+SET title = $1, description = $2, updated_at = now()
+WHERE id = $3
+RETURNING id, list_id, position, title, description, created_at, updated_at
 `
 
 type UpdateCardByIDParams struct {
 	Title       string      `json:"title"`
 	Description pgtype.Text `json:"description"`
-	Status      string      `json:"status"`
 	ID          string      `json:"id"`
 }
 
 func (q *Queries) UpdateCardByID(ctx context.Context, arg UpdateCardByIDParams) (Card, error) {
-	row := q.db.QueryRow(ctx, updateCardByID,
-		arg.Title,
-		arg.Description,
-		arg.Status,
-		arg.ID,
-	)
+	row := q.db.QueryRow(ctx, updateCardByID, arg.Title, arg.Description, arg.ID)
 	var i Card
 	err := row.Scan(
 		&i.ID,
@@ -194,7 +182,6 @@ func (q *Queries) UpdateCardByID(ctx context.Context, arg UpdateCardByIDParams) 
 		&i.Position,
 		&i.Title,
 		&i.Description,
-		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
