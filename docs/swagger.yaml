@@ -143,6 +143,17 @@ definitions:
           $ref: '#/definitions/cards.CardResponse'
         type: array
     type: object
+  cards.MoveCardRequest:
+    properties:
+      list_id:
+        type: string
+      position:
+        minimum: 0
+        type: integer
+    required:
+    - list_id
+    - position
+    type: object
   cards.SingleCardResponse:
     properties:
       card:
@@ -594,6 +605,46 @@ paths:
       security:
       - BearerAuth: []
       summary: Update a card
+      tags:
+      - cards
+  /cards/{id}/move:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Card ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Move data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/cards.MoveCardRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/cards.SingleCardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/apierrors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Move a card to another list or position
       tags:
       - cards
   /lists/{id}:

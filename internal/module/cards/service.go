@@ -10,6 +10,7 @@ type Service interface {
 	CreateCard(listID, userID string, req *CreateCardRequest) (SingleCardResponse, error)
 	ListCards(listID, userID string) (ListCardsResponse, error)
 	UpdateCard(cardID, userID string, req *UpdateCardRequest) (SingleCardResponse, error)
+	MoveCard(cardID, userID string, req *MoveCardRequest) (SingleCardResponse, error)
 	DeleteCard(cardID, userID string) error
 }
 
@@ -87,21 +88,76 @@ func (s *service) UpdateCard(cardID, userID string, req *UpdateCardRequest) (Sin
 		return SingleCardResponse{}, err
 	}
 
-	updatedCard, err := s.repo.UpdateCardByID(context.Background(), cardID, req.Title, req.Description, req.Status)
+	card, err = s.repo.UpdateCardByID(context.Background(), cardID, req.Title, req.Description, req.Status)
 	if err != nil {
 		return SingleCardResponse{}, apierrors.Internal(CARD_UPDATE_FAILED)
 	}
 
 	return SingleCardResponse{
 		Card: CardResponse{
-			ID:          updatedCard.ID,
-			ListID:      updatedCard.ListID,
-			Title:       updatedCard.Title,
-			Description: updatedCard.Description.String,
-			Status:      updatedCard.Status,
-			Position:    updatedCard.Position,
-			CreatedAt:   updatedCard.CreatedAt.Time.String(),
-			UpdatedAt:   updatedCard.UpdatedAt.Time.String(),
+			ID:          card.ID,
+			ListID:      card.ListID,
+			Title:       card.Title,
+			Description: card.Description.String,
+			Status:      card.Status,
+			Position:    card.Position,
+			CreatedAt:   card.CreatedAt.Time.String(),
+			UpdatedAt:   card.UpdatedAt.Time.String(),
+		},
+	}, nil
+}
+
+func (s *service) MoveCard(cardID, userID string, req *MoveCardRequest) (SingleCardResponse, error) {
+	ctx := context.Background()
+
+	// Fetch the card
+	card, err := s.repo.GetCardByID(ctx, cardID)
+	if err != nil {
+		return SingleCardResponse{}, apierrors.NotFound(CARD_NOT_FOUND)
+	}
+
+	// Check card ownership
+	if _, err := s.listChecker.IsOwner(card.ListID, userID); err != nil {
+		return SingleCardResponse{}, err
+	}
+
+	oldListID := card.ListID
+
+	if oldListID != req.ListID {
+		// If moving to a different list, check ownership of the new list as well
+		if _, err := s.listChecker.IsOwner(req.ListID, userID); err != nil {
+			return SingleCardResponse{}, err
+		}
+	}
+
+	// Update card's list and position
+	card, err = s.repo.MoveCardByID(ctx, cardID, req.ListID, req.Position)
+	if err != nil {
+		return SingleCardResponse{}, apierrors.Internal(CARD_UPDATE_FAILED)
+	}
+
+	// Reorder cards in the new list
+	if err := s.repo.ReorderCardsInList(ctx, req.ListID); err != nil {
+		return SingleCardResponse{}, apierrors.Internal(CARD_UPDATE_FAILED)
+	}
+
+	// If the card was moved to a different list, reorder cards in the old list as well
+	if oldListID != req.ListID {
+		if err := s.repo.ReorderCardsInList(ctx, oldListID); err != nil {
+			return SingleCardResponse{}, apierrors.Internal(CARD_UPDATE_FAILED)
+		}
+	}
+
+	return SingleCardResponse{
+		Card: CardResponse{
+			ID:          card.ID,
+			ListID:      card.ListID,
+			Title:       card.Title,
+			Description: card.Description.String,
+			Status:      card.Status,
+			Position:    card.Position,
+			CreatedAt:   card.CreatedAt.Time.String(),
+			UpdatedAt:   card.UpdatedAt.Time.String(),
 		},
 	}, nil
 }

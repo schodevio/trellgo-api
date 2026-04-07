@@ -119,6 +119,45 @@ func (h *handler) Update(ctx fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(resp)
 }
 
+// Move godoc
+// @Summary      Move a card to another list or position
+// @Tags         cards
+// @Accept       json
+// @Produce      json
+// @Param        id        path      string  true  "Card ID"
+// @Param        body  		 body      MoveCardRequest  true  "Move data"
+// @Success      200   		 {object}  SingleCardResponse
+// @Failure      400   		 {object}  apierrors.ErrorResponse
+// @Failure      401   		 {object}  apierrors.ErrorResponse
+// @Failure      422   		 {object}  apierrors.ErrorResponse
+// @Security     BearerAuth
+// @Router       /cards/{id}/move [post]
+func (h *handler) Move(ctx fiber.Ctx) error {
+	var req MoveCardRequest
+
+	if err := ctx.Bind().Body(&req); err != nil {
+		return apierrors.BadRequest(shared.REQUEST_VALIDATION_FAILED)
+	}
+
+	if err := validator.Validate(&req); err != nil {
+		return err
+	}
+
+	userID, ok := ctx.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return apierrors.Unauthorized(shared.USER_AUTHENTICATION_FAILED)
+	}
+
+	id := ctx.Params("id")
+
+	resp, err := h.service.MoveCard(id, userID, &req)
+	if err != nil {
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(resp)
+}
+
 // Delete godoc
 // @Summary      Delete a card
 // @Tags         cards

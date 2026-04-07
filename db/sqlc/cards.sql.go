@@ -115,6 +115,57 @@ func (q *Queries) GetListCards(ctx context.Context, listID string) ([]Card, erro
 	return items, nil
 }
 
+const moveCardByID = `-- name: MoveCardByID :one
+UPDATE cards
+SET list_id = $1, position = $2, updated_at = now()
+WHERE id = $3
+RETURNING id, list_id, position, title, description, status, created_at, updated_at
+`
+
+type MoveCardByIDParams struct {
+	ListID   string `json:"list_id"`
+	Position int32  `json:"position"`
+	ID       string `json:"id"`
+}
+
+func (q *Queries) MoveCardByID(ctx context.Context, arg MoveCardByIDParams) (Card, error) {
+	row := q.db.QueryRow(ctx, moveCardByID, arg.ListID, arg.Position, arg.ID)
+	var i Card
+	err := row.Scan(
+		&i.ID,
+		&i.ListID,
+		&i.Position,
+		&i.Title,
+		&i.Description,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const reorderCardsInList = `-- name: ReorderCardsInList :exec
+WITH ranked AS (
+  SELECT
+    id,
+    ROW_NUMBER() OVER (
+      PARTITION BY cards.list_id
+      ORDER BY position ASC, updated_at DESC
+    ) AS new_position
+  FROM cards
+  WHERE cards.list_id = $1
+)
+UPDATE cards
+SET position = ranked.new_position
+FROM ranked
+WHERE cards.id = ranked.id
+`
+
+func (q *Queries) ReorderCardsInList(ctx context.Context, listID string) error {
+	_, err := q.db.Exec(ctx, reorderCardsInList, listID)
+	return err
+}
+
 const updateCardByID = `-- name: UpdateCardByID :one
 UPDATE cards
 SET title = $1, description = $2, status = $3, updated_at = now()

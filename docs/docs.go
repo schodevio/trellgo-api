@@ -598,6 +598,69 @@ const docTemplate = `{
                 }
             }
         },
+        "/cards/{id}/move": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cards"
+                ],
+                "summary": "Move a card to another list or position",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Card ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Move data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/cards.MoveCardRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/cards.SingleCardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apierrors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apierrors.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/apierrors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/lists/{id}": {
             "delete": {
                 "security": [
@@ -1021,6 +1084,22 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/cards.CardResponse"
                     }
+                }
+            }
+        },
+        "cards.MoveCardRequest": {
+            "type": "object",
+            "required": [
+                "list_id",
+                "position"
+            ],
+            "properties": {
+                "list_id": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "integer",
+                    "minimum": 0
                 }
             }
         },

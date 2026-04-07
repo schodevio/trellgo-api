@@ -12,6 +12,8 @@ type Repository interface {
 	GetListCards(ctx context.Context, listID string) ([]sqlc.Card, error)
 	GetCardByID(ctx context.Context, cardID string) (sqlc.Card, error)
 	UpdateCardByID(ctx context.Context, cardID, title, description, status string) (sqlc.Card, error)
+	MoveCardByID(ctx context.Context, cardID, listID string, position int32) (sqlc.Card, error)
+	ReorderCardsInList(ctx context.Context, listID string) error
 	DeleteCardByID(ctx context.Context, cardID string) error
 }
 
@@ -48,6 +50,18 @@ func (r *repository) UpdateCardByID(ctx context.Context, cardID, title, descript
 		Description: pgtype.Text{String: description, Valid: description != ""},
 		Status:      status,
 	})
+}
+
+func (r *repository) MoveCardByID(ctx context.Context, cardID, listID string, position int32) (sqlc.Card, error) {
+	return r.queries.MoveCardByID(ctx, sqlc.MoveCardByIDParams{
+		ID:       cardID,
+		ListID:   listID,
+		Position: position,
+	})
+}
+
+func (r *repository) ReorderCardsInList(ctx context.Context, listID string) error {
+	return r.queries.ReorderCardsInList(ctx, listID)
 }
 
 func (r *repository) DeleteCardByID(ctx context.Context, cardID string) error {

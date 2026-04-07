@@ -22,6 +22,11 @@ type UpdateCardRequest struct {
 	Status      string `json:"status" validate:"required,oneof=todo in_progress done"`
 }
 
+type MoveCardRequest struct {
+	ListID   string `json:"list_id" validate:"required"`
+	Position int32  `json:"position" validate:"required,min=0"`
+}
+
 type CardResponse struct {
 	ID          string `json:"id"`
 	ListID      string `json:"list_id"`
