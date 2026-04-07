@@ -1,5 +1,14 @@
 package boards
 
+// Errors
+const (
+	BOARD_NOT_FOUND     string = "board not found"
+	BOARDS_FETCH_FAILED string = "failed to fetch boards"
+	BOARD_CREATE_FAILED string = "failed to create board"
+	BOARD_UPDATE_FAILED string = "failed to update board"
+	BOARD_DELETE_FAILED string = "failed to delete board"
+)
+
 type CreateBoardRequest struct {
 	Name string `json:"name" validate:"required,min=1,max=255"`
 }

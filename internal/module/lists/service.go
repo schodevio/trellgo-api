@@ -34,7 +34,7 @@ func (s *service) CreateList(boardID, userID string, req *CreateListRequest) (Si
 
 	list, err := s.repo.CreateList(context.Background(), boardID, req.Name, req.Position)
 	if err != nil {
-		return SingleListResponse{}, apierrors.Internal("failed to create list")
+		return SingleListResponse{}, apierrors.Internal(LIST_CREATE_FAILED)
 	}
 
 	return SingleListResponse{
@@ -56,7 +56,7 @@ func (s *service) ListLists(boardID, userID string) (ListListsResponse, error) {
 
 	lists, err := s.repo.GetBoardLists(context.Background(), boardID)
 	if err != nil {
-		return ListListsResponse{}, apierrors.Internal("failed to fetch lists")
+		return ListListsResponse{}, apierrors.Internal(LISTS_FETCH_FAILED)
 	}
 
 	items := make([]ListResponse, 0, len(lists))
@@ -77,7 +77,7 @@ func (s *service) ListLists(boardID, userID string) (ListListsResponse, error) {
 func (s *service) UpdateList(id, userID string, req *UpdateListRequest) (SingleListResponse, error) {
 	list, err := s.repo.GetListByID(context.Background(), id)
 	if err != nil {
-		return SingleListResponse{}, apierrors.NotFound("list not found")
+		return SingleListResponse{}, apierrors.NotFound(LIST_NOT_FOUND)
 	}
 
 	if _, err := s.boardChecker.IsOwner(list.BoardID, userID); err != nil {
@@ -86,7 +86,7 @@ func (s *service) UpdateList(id, userID string, req *UpdateListRequest) (SingleL
 
 	list, err = s.repo.UpdateListByID(context.Background(), id, req.Name, req.Position)
 	if err != nil {
-		return SingleListResponse{}, apierrors.Internal("failed to update list")
+		return SingleListResponse{}, apierrors.Internal(LIST_UPDATE_FAILED)
 	}
 
 	return SingleListResponse{
@@ -104,7 +104,7 @@ func (s *service) UpdateList(id, userID string, req *UpdateListRequest) (SingleL
 func (s *service) DeleteList(listID, userID string) error {
 	list, err := s.repo.GetListByID(context.Background(), listID)
 	if err != nil {
-		return apierrors.NotFound("list not found")
+		return apierrors.NotFound(LIST_NOT_FOUND)
 	}
 
 	if _, err := s.boardChecker.IsOwner(list.BoardID, userID); err != nil {
@@ -112,7 +112,7 @@ func (s *service) DeleteList(listID, userID string) error {
 	}
 
 	if err := s.repo.DeleteListByID(context.Background(), listID); err != nil {
-		return apierrors.Internal("failed to delete list")
+		return apierrors.Internal(LIST_DELETE_FAILED)
 	}
 
 	return nil
@@ -121,7 +121,7 @@ func (s *service) DeleteList(listID, userID string) error {
 func (s *service) IsOwner(listID, userID string) (bool, error) {
 	_, err := s.repo.GetUserListByID(context.Background(), listID, userID)
 	if err != nil {
-		return false, apierrors.NotFound("list not found")
+		return false, apierrors.NotFound(LIST_NOT_FOUND)
 	}
 
 	return true, nil

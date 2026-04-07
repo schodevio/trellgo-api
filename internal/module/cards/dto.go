@@ -1,5 +1,14 @@
 package cards
 
+// Errors
+const (
+	CARD_NOT_FOUND     string = "card not found"
+	CARDS_FETCH_FAILED string = "failed to fetch cards"
+	CARD_CREATE_FAILED string = "failed to create card"
+	CARD_UPDATE_FAILED string = "failed to update card"
+	CARD_DELETE_FAILED string = "failed to delete card"
+)
+
 type CreateCardRequest struct {
 	Title       string `json:"title" validate:"required,min=1,max=255"`
 	Description string `json:"description,omitempty" validate:"max=1000"`

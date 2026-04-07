@@ -1,5 +1,14 @@
 package lists
 
+// Errors
+const (
+	LIST_NOT_FOUND     string = "list not found"
+	LISTS_FETCH_FAILED string = "failed to fetch lists"
+	LIST_CREATE_FAILED string = "failed to create list"
+	LIST_UPDATE_FAILED string = "failed to update list"
+	LIST_DELETE_FAILED string = "failed to delete list"
+)
+
 type CreateListRequest struct {
 	Name     string `json:"name" validate:"required,min=1,max=255"`
 	Position int32  `json:"position" validate:"required,min=0"`

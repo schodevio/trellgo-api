@@ -27,11 +27,11 @@ func newService(repo Repository, authKey paseto.V4SymmetricKey) Service {
 func (s *service) SignInUser(data *SignInRequest) (SignInResponse, error) {
 	user, err := s.repo.GetUserByEmail(context.Background(), data.Email)
 	if err != nil {
-		return SignInResponse{}, apierrors.Unauthorized("invalid credentials")
+		return SignInResponse{}, apierrors.Unauthorized(INVALID_CREDENTIALS)
 	}
 
 	if !checkPassword(data.Password, user.PasswordHash) {
-		return SignInResponse{}, apierrors.Unauthorized("invalid credentials")
+		return SignInResponse{}, apierrors.Unauthorized(INVALID_CREDENTIALS)
 	}
 
 	accessToken, refreshToken, err := s.generateTokens(&generateTokensData{
@@ -52,16 +52,16 @@ func (s *service) SignInUser(data *SignInRequest) (SignInResponse, error) {
 func (s *service) RefreshToken(data *RefreshRequest) (SignInResponse, error) {
 	_, err := parseRefreshToken(data.Token, s.authKey)
 	if err != nil {
-		return SignInResponse{}, apierrors.Unauthorized("invalid refresh token")
+		return SignInResponse{}, apierrors.Unauthorized(INVALID_OR_EXPIRED_TOKEN)
 	}
 
 	stored, err := s.repo.GetRefreshTokenByRawToken(context.Background(), data.Token)
 	if err != nil {
-		return SignInResponse{}, apierrors.Unauthorized("invalid or expired refresh token")
+		return SignInResponse{}, apierrors.Unauthorized(INVALID_OR_EXPIRED_TOKEN)
 	}
 
 	if err := s.repo.RevokeRefreshToken(context.Background(), stored.ID); err != nil {
-		return SignInResponse{}, apierrors.Internal("failed to revoke refresh token")
+		return SignInResponse{}, apierrors.Internal(REFRESH_TOKEN_REVOKE_FAILED)
 	}
 
 	accessToken, newRefreshToken, err := s.generateTokens(&generateTokensData{
@@ -82,17 +82,17 @@ func (s *service) RefreshToken(data *RefreshRequest) (SignInResponse, error) {
 func (s *service) SignUpUser(data *SignUpRequest) (SignUpResponse, error) {
 	_, err := s.repo.GetUserByEmail(context.Background(), data.Email)
 	if err == nil {
-		return SignUpResponse{}, apierrors.Conflict("user already exists")
+		return SignUpResponse{}, apierrors.Conflict(USER_ALREADY_EXISTS)
 	}
 
 	passwordHash, err := hashPassword(data.Password)
 	if err != nil {
-		return SignUpResponse{}, apierrors.Internal("failed to hash password")
+		return SignUpResponse{}, apierrors.Internal(PASSWORD_HASH_FAILED)
 	}
 
 	user, err := s.repo.CreateUser(context.Background(), data.Email, passwordHash)
 	if err != nil {
-		return SignUpResponse{}, apierrors.Internal("failed to create user")
+		return SignUpResponse{}, apierrors.Internal(USER_CREATE_FAILED)
 	}
 
 	return SignUpResponse{Email: user.Email}, nil
@@ -101,11 +101,11 @@ func (s *service) SignUpUser(data *SignUpRequest) (SignUpResponse, error) {
 func (s *service) SignOut(token string) error {
 	stored, err := s.repo.GetRefreshTokenByRawToken(context.Background(), token)
 	if err != nil {
-		return apierrors.Unauthorized("invalid or expired refresh token")
+		return apierrors.Unauthorized(INVALID_OR_EXPIRED_TOKEN)
 	}
 
 	if err := s.repo.RevokeRefreshToken(context.Background(), stored.ID); err != nil {
-		return apierrors.Internal("failed to sign out")
+		return apierrors.Internal(SIGN_OUT_FAILED)
 	}
 
 	return nil
@@ -144,7 +144,7 @@ func (s *service) generateTokens(data *generateTokensData) (string, string, erro
 		refreshExpiration,
 	)
 	if err != nil {
-		return "", "", apierrors.Internal("failed to generate tokens")
+		return "", "", apierrors.Internal(TOKEN_GENERATE_FAILED)
 	}
 
 	return accessToken, refreshToken, nil

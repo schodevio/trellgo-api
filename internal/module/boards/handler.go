@@ -2,6 +2,7 @@ package boards
 
 import (
 	"github.com/gofiber/fiber/v3"
+	"github.com/schodevio/trellgo/internal/module/shared"
 	"github.com/schodevio/trellgo/internal/platform/apierrors"
 	"github.com/schodevio/trellgo/internal/platform/validator"
 )
@@ -30,7 +31,7 @@ func (h *handler) Create(ctx fiber.Ctx) error {
 	var req CreateBoardRequest
 
 	if err := ctx.Bind().Body(&req); err != nil {
-		return apierrors.BadRequest("invalid request body")
+		return apierrors.BadRequest(shared.REQUEST_VALIDATION_FAILED)
 	}
 
 	if err := validator.Validate(&req); err != nil {
@@ -39,7 +40,7 @@ func (h *handler) Create(ctx fiber.Ctx) error {
 
 	userID, ok := ctx.Locals("user_id").(string)
 	if !ok || userID == "" {
-		return apierrors.Unauthorized("missing user identity")
+		return apierrors.Unauthorized(shared.USER_AUTHENTICATION_FAILED)
 	}
 
 	resp, err := h.service.CreateBoard(userID, &req)
@@ -61,7 +62,7 @@ func (h *handler) Create(ctx fiber.Ctx) error {
 func (h *handler) List(ctx fiber.Ctx) error {
 	userID, ok := ctx.Locals("user_id").(string)
 	if !ok || userID == "" {
-		return apierrors.Unauthorized("missing user identity")
+		return apierrors.Unauthorized(shared.USER_AUTHENTICATION_FAILED)
 	}
 
 	resp, err := h.service.ListBoards(userID)
@@ -85,7 +86,7 @@ func (h *handler) List(ctx fiber.Ctx) error {
 func (h *handler) Show(ctx fiber.Ctx) error {
 	userID, ok := ctx.Locals("user_id").(string)
 	if !ok || userID == "" {
-		return apierrors.Unauthorized("missing user identity")
+		return apierrors.Unauthorized(shared.USER_AUTHENTICATION_FAILED)
 	}
 
 	id := ctx.Params("id")
@@ -116,7 +117,7 @@ func (h *handler) Update(ctx fiber.Ctx) error {
 	var req UpdateBoardRequest
 
 	if err := ctx.Bind().Body(&req); err != nil {
-		return apierrors.BadRequest("invalid request body")
+		return apierrors.BadRequest(shared.REQUEST_VALIDATION_FAILED)
 	}
 
 	if err := validator.Validate(&req); err != nil {
@@ -125,7 +126,7 @@ func (h *handler) Update(ctx fiber.Ctx) error {
 
 	userID, ok := ctx.Locals("user_id").(string)
 	if !ok || userID == "" {
-		return apierrors.Unauthorized("missing user identity")
+		return apierrors.Unauthorized(shared.USER_AUTHENTICATION_FAILED)
 	}
 
 	id := ctx.Params("id")
@@ -151,7 +152,7 @@ func (h *handler) Update(ctx fiber.Ctx) error {
 func (h *handler) Delete(ctx fiber.Ctx) error {
 	userID, ok := ctx.Locals("user_id").(string)
 	if !ok || userID == "" {
-		return apierrors.Unauthorized("missing user identity")
+		return apierrors.Unauthorized(shared.USER_AUTHENTICATION_FAILED)
 	}
 
 	id := ctx.Params("id")

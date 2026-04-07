@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/gofiber/fiber/v3"
+	"github.com/schodevio/trellgo/internal/module/shared"
 	"github.com/schodevio/trellgo/internal/platform/apierrors"
 	"github.com/schodevio/trellgo/internal/platform/validator"
 )
@@ -26,7 +27,7 @@ func newHandler(service Service) *handler {
 func (h *handler) Refresh(ctx fiber.Ctx) error {
 	token := ctx.Cookies(refreshTokenCookie)
 	if token == "" {
-		return apierrors.Unauthorized("missing refresh token")
+		return apierrors.Unauthorized(REFRESH_TOKEN_NOT_FOUND)
 	}
 
 	req := RefreshRequest{Token: token}
@@ -57,7 +58,7 @@ func (h *handler) SignIn(ctx fiber.Ctx) error {
 	var req SignInRequest
 
 	if err := ctx.Bind().Body(&req); err != nil {
-		return apierrors.BadRequest("invalid request body")
+		return apierrors.BadRequest(shared.REQUEST_VALIDATION_FAILED)
 	}
 
 	if err := validator.Validate(&req); err != nil {
@@ -92,7 +93,7 @@ func (h *handler) SignUp(ctx fiber.Ctx) error {
 	var req SignUpRequest
 
 	if err := ctx.Bind().Body(&req); err != nil {
-		return apierrors.BadRequest("invalid request body")
+		return apierrors.BadRequest(shared.REQUEST_VALIDATION_FAILED)
 	}
 
 	if err := validator.Validate(&req); err != nil {
@@ -117,7 +118,7 @@ func (h *handler) SignUp(ctx fiber.Ctx) error {
 func (h *handler) SignOut(ctx fiber.Ctx) error {
 	token := ctx.Cookies(refreshTokenCookie)
 	if token == "" {
-		return apierrors.Unauthorized("missing refresh token")
+		return apierrors.Unauthorized(REFRESH_TOKEN_NOT_FOUND)
 	}
 
 	if err := h.service.SignOut(token); err != nil {

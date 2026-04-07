@@ -110,7 +110,7 @@ func TestSignInUser(t *testing.T) {
 
 		repo.
 			On("GetUserByEmail", mock.Anything, "notfound@example.com").
-			Return(sqlc.User{}, errors.New("not found"))
+			Return(sqlc.User{}, assert.AnError)
 
 		resp, err := svc.SignInUser(&SignInRequest{
 			Email:    "notfound@example.com",
@@ -217,7 +217,7 @@ func TestRefreshToken(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Empty(t, resp.AccessToken)
-		assert.ErrorContains(t, err, "invalid refresh token")
+		assert.ErrorContains(t, err, "invalid or expired token")
 		repo.AssertExpectations(t)
 	})
 
@@ -229,13 +229,13 @@ func TestRefreshToken(t *testing.T) {
 
 		repo.
 			On("GetRefreshTokenByRawToken", mock.Anything, token).
-			Return(sqlc.RefreshToken{}, errors.New("not found"))
+			Return(sqlc.RefreshToken{}, assert.AnError)
 
 		resp, err := svc.RefreshToken(&RefreshRequest{Token: token})
 
 		assert.Error(t, err)
 		assert.Empty(t, resp.AccessToken)
-		assert.ErrorContains(t, err, "invalid or expired refresh token")
+		assert.ErrorContains(t, err, "invalid or expired token")
 		repo.AssertExpectations(t)
 	})
 
@@ -252,7 +252,7 @@ func TestRefreshToken(t *testing.T) {
 
 		repo.
 			On("RevokeRefreshToken", mock.Anything, stored.ID).
-			Return(errors.New("db error"))
+			Return(assert.AnError)
 
 		resp, err := svc.RefreshToken(&RefreshRequest{Token: token})
 
@@ -345,7 +345,7 @@ func TestSignUpUser(t *testing.T) {
 
 		repo.
 			On("CreateUser", mock.Anything, req.Email, mock.Anything).
-			Return(sqlc.User{}, errors.New("db error"))
+			Return(sqlc.User{}, assert.AnError)
 
 		resp, err := svc.SignUpUser(req)
 
@@ -388,12 +388,12 @@ func TestSignOut(t *testing.T) {
 
 		repo.
 			On("GetRefreshTokenByRawToken", mock.Anything, token).
-			Return(sqlc.RefreshToken{}, errors.New("not found"))
+			Return(sqlc.RefreshToken{}, assert.AnError)
 
 		err := svc.SignOut(token)
 
 		assert.Error(t, err)
-		assert.ErrorContains(t, err, "invalid or expired refresh token")
+		assert.ErrorContains(t, err, "invalid or expired token")
 		repo.AssertExpectations(t)
 	})
 
@@ -410,7 +410,7 @@ func TestSignOut(t *testing.T) {
 
 		repo.
 			On("RevokeRefreshToken", mock.Anything, stored.ID).
-			Return(errors.New("db error"))
+			Return(assert.AnError)
 
 		err := svc.SignOut(token)
 

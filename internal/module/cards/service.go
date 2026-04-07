@@ -33,7 +33,7 @@ func (s *service) CreateCard(listID, userID string, req *CreateCardRequest) (Sin
 
 	card, err := s.repo.CreateCard(context.Background(), listID, req.Title, req.Description, req.Status, req.Position)
 	if err != nil {
-		return SingleCardResponse{}, apierrors.Internal("failed to create card")
+		return SingleCardResponse{}, apierrors.Internal(CARD_CREATE_FAILED)
 	}
 
 	return SingleCardResponse{
@@ -57,7 +57,7 @@ func (s *service) ListCards(listID, userID string) (ListCardsResponse, error) {
 
 	cards, err := s.repo.GetListCards(context.Background(), listID)
 	if err != nil {
-		return ListCardsResponse{}, apierrors.Internal("failed to list cards")
+		return ListCardsResponse{}, apierrors.Internal(CARDS_FETCH_FAILED)
 	}
 
 	resp := ListCardsResponse{Cards: make([]CardResponse, len(cards))}
@@ -80,7 +80,7 @@ func (s *service) ListCards(listID, userID string) (ListCardsResponse, error) {
 func (s *service) UpdateCard(cardID, userID string, req *UpdateCardRequest) (SingleCardResponse, error) {
 	card, err := s.repo.GetCardByID(context.Background(), cardID)
 	if err != nil {
-		return SingleCardResponse{}, apierrors.NotFound("card not found")
+		return SingleCardResponse{}, apierrors.NotFound(CARD_NOT_FOUND)
 	}
 
 	if _, err := s.listChecker.IsOwner(card.ListID, userID); err != nil {
@@ -89,7 +89,7 @@ func (s *service) UpdateCard(cardID, userID string, req *UpdateCardRequest) (Sin
 
 	updatedCard, err := s.repo.UpdateCardByID(context.Background(), cardID, req.Title, req.Description, req.Status, req.Position)
 	if err != nil {
-		return SingleCardResponse{}, apierrors.Internal("failed to update card")
+		return SingleCardResponse{}, apierrors.Internal(CARD_UPDATE_FAILED)
 	}
 
 	return SingleCardResponse{
@@ -109,7 +109,7 @@ func (s *service) UpdateCard(cardID, userID string, req *UpdateCardRequest) (Sin
 func (s *service) DeleteCard(cardID, userID string) error {
 	card, err := s.repo.GetCardByID(context.Background(), cardID)
 	if err != nil {
-		return apierrors.NotFound("card not found")
+		return apierrors.NotFound(CARD_NOT_FOUND)
 	}
 
 	if _, err := s.listChecker.IsOwner(card.ListID, userID); err != nil {
@@ -117,7 +117,7 @@ func (s *service) DeleteCard(cardID, userID string) error {
 	}
 
 	if err := s.repo.DeleteCardByID(context.Background(), cardID); err != nil {
-		return apierrors.Internal("failed to delete card")
+		return apierrors.Internal(CARD_DELETE_FAILED)
 	}
 
 	return nil
